@@ -78,6 +78,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private float density;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private UiSounds sounds;
+    /** The last press that got its sound (soundForKey), so the same press is not played twice. */
+    private long soundedDownTime = -1;
+    private int soundedRepeat = -1, soundedCode = -1;
     /** Refreshes the network pill when the connection changes: at boot Wi-Fi often connects after Home is shown. */
     private final ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
         @Override
@@ -103,6 +107,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        sounds = new UiSounds(this);
         density = getResources().getDisplayMetrics().density;
         COLUMNS = Math.max(1, getResources().getInteger(R.integer.columns));
         liveTvPkg = getString(R.string.live_tv_package).trim();
@@ -194,6 +199,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         heroShown = false;
         heroName.setAlpha(0f);
         ambient.setAlpha(0f);
+        sounds.resume();
         // Read these before reload(): rebinding can move focus to the first tile and overwrite them.
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
@@ -214,14 +220,76 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onPause() {
         super.onPause();
+        sounds.pause();
         handler.removeCallbacks(minuteTick);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        sounds.release();
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         if (cm != null) cm.unregisterNetworkCallback(networkCallback);
+    }
+
+    /**
+     * Plays a key's sound on the press itself, before focus or anything else moves, so it lands with the button:
+     * a move when a D-pad key will move focus, a select when OK presses something (on press, not release: the
+     * click only happens on release, which feels late). Returns true when this press has its sound.
+     */
+    boolean soundForKey(KeyEvent event) {
+        if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+        int code = event.getKeyCode();
+        if (event.getDownTime() == soundedDownTime && event.getRepeatCount() == soundedRepeat && code == soundedCode) {
+            return true;
+        }
+        View focus = getCurrentFocus();
+        if (focus == null) return false;
+        if (isDpad(code)) {
+            if (focus.focusSearch(directionOf(code)) == null) return false;
+            sounds.nav();
+        } else if ((code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER)
+                && event.getRepeatCount() == 0 && focus.isClickable()) {
+            sounds.select();
+        } else {
+            return false;
+        }
+        soundedDownTime = event.getDownTime();
+        soundedRepeat = event.getRepeatCount();
+        soundedCode = code;
+        return true;
+    }
+
+    /**
+     * A D-pad key nobody handles would be passed to the window's own focus navigation, which plays the system
+     * sound whatever the views say; so focus is moved here instead and the key reported as handled.
+     */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        View before = getCurrentFocus();
+        int code = event.getKeyCode();
+        boolean played = soundForKey(event);
+        boolean handled = super.dispatchKeyEvent(event);
+        if (event.getAction() == KeyEvent.ACTION_DOWN && isDpad(code)) {
+            if (!handled && before != null) {
+                View next = before.focusSearch(directionOf(code));
+                if (next != null) next.requestFocus(directionOf(code));
+                handled = true;
+            }
+            // The tile rows move focus by hand where focusSearch can disagree: sound late rather than never.
+            if (!played && getCurrentFocus() != before) sounds.nav();
+        }
+        return handled;
+    }
+
+    private static boolean isDpad(int code) {
+        return code >= KeyEvent.KEYCODE_DPAD_UP && code <= KeyEvent.KEYCODE_DPAD_RIGHT;
+    }
+
+    private static int directionOf(int code) {
+        return code == KeyEvent.KEYCODE_DPAD_UP ? View.FOCUS_UP
+                : code == KeyEvent.KEYCODE_DPAD_DOWN ? View.FOCUS_DOWN
+                : code == KeyEvent.KEYCODE_DPAD_LEFT ? View.FOCUS_LEFT : View.FOCUS_RIGHT;
     }
 
     @Override
