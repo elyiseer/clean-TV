@@ -20,4 +20,9 @@
     <string name="cant_open">Can\'t open %1$s</string>
     <string name="date_format">EEEE  d MMMM</string>
     <string name="dream_name">Clock</string>
+    <string name="fire_network">Network</string>
+    <string name="fire_apps">Applications</string>
+    <string name="fire_controllers">Controllers &amp; Bluetooth</string>
+    <string name="fire_device">My Fire TV</string>
+    <string name="fire_all_settings">All settings</string>
 </resources>

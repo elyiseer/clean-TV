@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Outfit weight for styles below API 28, where android:fontVariationSettings does not exist (see Fonts). -->
+    <declare-styleable name="Outfit">
+        <attr name="outfitWeight" format="integer" />
+    </declare-styleable>
+</resources>

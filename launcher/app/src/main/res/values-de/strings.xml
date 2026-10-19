@@ -19,4 +19,9 @@
     <string name="not_available">Auf diesem TV nicht verfügbar</string>
     <string name="cant_open">%1$s lässt sich nicht öffnen</string>
     <string name="date_format">EEEE, d. MMMM</string>
+    <string name="fire_network">Netzwerk</string>
+    <string name="fire_apps">Apps</string>
+    <string name="fire_controllers">Controller &amp; Bluetooth</string>
+    <string name="fire_device">Mein Fire TV</string>
+    <string name="fire_all_settings">Alle Einstellungen</string>
 </resources>
