@@ -1,0 +1,101 @@
+# Xiaomi Mi TV (MiTV-MOOQ1, codename tarzan), Android TV 10 (SDK 29), firmware QTG3.200305.006.6148
+# Same model as examples/xiaomi-mi-tv-4a (firmware ...2591). This list is for the newer build and
+# only names packages that are actually installed here (checked against `pm list packages -f`).
+# It follows examples/xiaomi-mitv-mooq0, which is the same chassis family and was lived with.
+#
+# STATUS: draft. Not yet lived with for a few days on this TV. Replace this line with what you
+# tested and what broke before opening a pull request (see CONTRIBUTING.md).
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/xiaomi-mitv-mooq1/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/xiaomi-mitv-mooq1/debloat.txt
+# Everything is DISABLED for user 0, not uninstalled. Comment out any line you want to keep.
+# Apply in small batches (split the file) and reboot once between them.
+#
+# Kept deliberately, despite names that look like bloat (same findings as MOOQ0, `dumpsys package`):
+#   com.xiaomi.android.tvsetup.partnercustomizer  Bluetooth remote pairing (BleRcActivity)
+#   com.mediatek.hotkey.dispatcher                the remote's hotkey service, including Source
+#   com.mediatek.tvinput                          serves HDMI, composite AV and the tuner
+#   com.mediatek.wwtv.setupwizard                 channel tuning wizard for Live TV
+#   com.mediatek.wwtv.tvcenter                    Live TV; its activity is also the HDMI/AV window,
+#                                                 hide it in the launcher (hidden_apps) instead
+#   mitv.service, com.xiaomi.mitv.res             core TV service and framework resources
+#   com.xiaomi.mitv.updateservice                 Xiaomi firmware updates: the only source of
+#                                                 system security patches, so it stays enabled
+#   com.google.android.katniss                    voice assistant (mic button)
+#   com.google.android.apps.mediashell            Chromecast built-in
+#   com.google.android.tv.remote.service          phone-as-remote
+#   com.google.android.gms, com.android.vending, com.google.android.webview
+#                                                 Play Services, Play Store, WebView: these keep
+#                                                 the streaming apps and their security patches
+#                                                 updating through the Play Store
+#
+# Home claimants on this firmware: the stock launcher is com.google.android.tvlauncher (an updated
+# /data app, priority 2). com.duokan.factorytest below also declares HOME at priority 0.
+# NOTE: com.google.android.tvlauncher is deliberately NOT in this list. launcher/build-and-install.sh
+# disables it only after the replacement launcher is installed and verified as Home.
+# Run the launcher install BEFORE anything that touches Home, never after.
+#
+# Known quirk on the older ...2591 build: default_input_method pointed at com.baidu.input, which is
+# not installed, so no keyboard appeared in search fields. Gboard is installed here. Check with
+#   tools/tv.py 'settings get secure default_input_method'
+# and, if it is not Gboard, set it (README Troubleshooting, "No on-screen keyboard").
+#
+# Sideloaded apps (Kodi, VLC, SmartTube, ...) and eu.chainfire.tv.sideloadlauncher are not listed
+# on purpose: they are the owner's own apps.
+
+# ---- Xiaomi telemetry and analytics ----
+com.miui.tv.analytics
+com.xiaomi.statistic
+com.google.android.tv.bugreportsender          # automatic bug report upload
+com.google.android.feedback                    # crash / feedback reporting
+
+# ---- Xiaomi content, ads and recommendation rows ----
+com.mitv.tvhome.atv                            # PatchWall
+com.mitv.tvhome.michannel                      # Mi recommendation channels
+com.mitv.tvhome.mitvplus                       # Mi TV+ FAST channels
+com.xm.webcontent                              # Xiaomi promo web content
+com.xiaomi.floatingframe                       # floating promo overlay service
+android.autoinstalls.config.xiaomi.amelie      # partner app auto-install config
+
+# ---- Background services not needed ----
+com.xiaomi.mitv.tvmanager                      # "TV Manager" cleaner / boost app
+com.xiaomi.mitv.smartshare                     # Mi SmartShare casting; Chromecast is kept
+com.xiaomi.amazon.alexa                        # Alexa bridge; Google voice search is kept
+com.mitv.gallery                               # Mi Gallery
+
+# ---- Preloaded apps nobody asked for ----
+com.xiaomi.mimusic2                            # Mi Music
+com.google.android.play.games                  # Play Games
+com.mitv.tvlock                                # Xiaomi TV lock / parental password
+com.xiaomo.tv.milegal                          # Xiaomi legal / privacy screens
+com.mstar.android.tv.disclaimercustomization   # vendor disclaimer screen
+com.mediatek.wwtv.webview                      # vendor web view shell
+fusion.android.tv.demo                         # retail store demo loop
+
+# ---- Home-screen claimants replaced by launcher/ ----
+# The factory test app also declares the HOME intent (priority 0, same as a replacement launcher;
+# the stock launcher sits at 2). Disabled so the Home button can never land on it.
+com.duokan.factorytest
+
+# ---- Stock launcher recommendation plumbing (replaced by launcher/) ----
+com.google.android.tvrecommendations
+com.google.android.leanbacklauncher
+com.google.android.leanbacklauncher.recommendations
+
+# ---- Optional, by choice. Uncomment what you don't use ----
+# Screensavers: if you disable these, point the screensaver elsewhere FIRST, for example
+#   settings put secure screensaver_components com.gathin.tvhome/.ClockDream
+# com.mitv.dream                               # Xiaomi MiDream screensaver
+# com.google.android.backdrop                  # Google ambient screensaver
+# Media apps: pick these only if you play everything through Kodi / VLC / the streaming apps.
+# com.xiaomi.mitv.mediaexplorer                # Mi USB media browser
+# com.mitv.videoplayer                         # Mi video player
+# com.google.android.videos                    # Play Movies & TV
+# com.google.android.youtube.tvmusic           # YouTube Music
+# com.xiaomi.wfdsinkhelperservice              # Miracast sink (screen mirroring to the TV)
+
+# ---- Only if needed ----
+# com.google.android.tungsten.setupwraith is installed on this firmware. On the Google TV models
+# in this repo it is the app that steals Home from a custom launcher. Do NOT disable it here unless
+# build-and-install.sh reports that Home does not resolve to the new launcher. If you do, keep the
+# line in this file so tools/restore.sh re-enables it before any factory reset.

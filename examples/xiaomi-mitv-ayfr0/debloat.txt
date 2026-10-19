@@ -1,0 +1,93 @@
+# Xiaomi TV Stick (MiTV-AYFR0, codename soul, Amlogic), Android TV 11 (SDK 30), firmware RTT0.211222.001.1546.
+# Fingerprint: Xiaomi/soul/soul:11/RTT0.211222.001/1546:user/release-keys. 2 GB RAM (MemTotal 2038028 kB).
+# Amlogic system apps (com.droidlogic*) are present. No Live TV, tuner or input-switch packages are
+# installed, so this is a streaming stick: leave live_tv_package empty in config.xml; the Inputs pill hides itself.
+#
+# Apply:   TV_HOST=<stick ip> tools/disable.sh examples/xiaomi-mitv-ayfr0/debloat.txt
+# Undo:    TV_HOST=<stick ip> tools/restore.sh examples/xiaomi-mitv-ayfr0/debloat.txt
+# Everything is DISABLED for user 0, not uninstalled. Comment out any line you want to keep.
+# Nothing was disabled before this list was written (`pm list packages -d` was empty).
+# Only packages that are installed on this stick are listed (checked against `pm list packages -f`).
+#
+# STATUS: draft. Built from this stick's own package list plus the Xiaomi lists in this repo
+# (xiaomi-mitv-aesp0, xiaomi-mi-box-s-2nd-gen, xiaomi-mitv-mooq1). NOT lived with yet.
+# Replace this line with what you tested and what broke before opening a pull request.
+#
+# Stock launcher: com.google.android.tvlauncher (an updated /data app). It is deliberately NOT in this list:
+# launcher/build-and-install.sh disables it only after the replacement launcher is installed and
+# verified as Home.
+#
+# HOME claimants on stock (`cmd package query-activities -a android.intent.action.MAIN -c android.intent.category.HOME`):
+#   com.google.android.tvlauncher/.MainActivity          priority 2
+#   com.android.tv.settings/.system.FallbackHome         priority -1000 (the system's last resort)
+# com.google.android.tungsten.setupwraith is installed but does NOT claim HOME here, so unlike the Google TV
+# boxes in this repo it is not in the way of a replacement launcher. Leave it enabled.
+#
+# Kept deliberately, despite names that look like bloat:
+#   com.xiaomi.android.tvsetup.partnercustomizer  remote pairing / shortcut buttons
+#   com.mi.bluetooth, mitv.service                Bluetooth stack for the remote, core TV service
+#   com.droidlogic, com.droidlogic.overlay        Amlogic system resources
+#   com.android.tv.settings                       Xiaomi's settings app (MiTVSettingsBox)
+#   com.xiaomi.mitv.updateservice                 Xiaomi firmware updates: the only source of system
+#                                                 security patches, so it stays enabled
+#   com.google.android.katniss                    voice assistant (mic button)
+#   com.google.android.apps.mediashell            Chromecast built-in
+#   com.google.android.tv.remote.service          phone-as-remote
+#   com.google.android.gms, com.android.vending, com.google.android.webview
+#                                                 Play Services, Play Store and WebView keep the
+#                                                 streaming apps and their security patches updating
+#
+# Not listed on purpose: Netflix, YouTube, Disney+, Prime Video, Apple TV, Max, Spotify, and the apps the
+# owner installed (SkyShowtime, Kodi, VLC, SmartTube, ZeroTier, GeForce NOW, file manager, TuneIn,
+# AirConsole, Lux, com.x.xtv, eu.chainfire.tv.sideloadlauncher).
+#
+# Watch on a stick: the remote's Home button may send KEYCODE_ALL_APPS instead of HOME (see
+# xiaomi-mitv-aesp0, Android 9). If Home does nothing once the new launcher is in, reinstall with
+#   HOME_KEY_SERVICE=1 TV_HOST=<stick ip> launcher/build-and-install.sh
+# and test with the real remote, not `input keyevent`. Not yet checked on this firmware.
+
+# Xiaomi and Google telemetry
+com.miui.tv.analytics                          # Mi analytics
+com.xiaomi.statistic                           # Xiaomi usage stats uploader
+com.google.android.feedback                    # crash / feedback reporting
+com.google.android.partnersetup                # Google RLZ attribution pings
+
+# PatchWall, content rows, promos
+com.mitv.tvhome.atv                            # PatchWall
+com.mitv.tvhome.michannel                      # Mi recommendation channels
+com.mitv.tvhome.mitvplus                       # Mi TV+ FAST channels
+com.xm.webcontent                              # Xiaomi promo web content
+com.google.android.tvrecommendations           # stock launcher recommendation rows, replaced by launcher/
+
+# Play auto-install of partner apps (two copies: a system one and an updated /data one)
+android.autoinstalls.config.xioami.mibox3      # sic, "xioami"
+android.autoinstalls.config.xiaomi.mibox3
+
+# Preloaded apps nobody asked for
+com.google.android.play.games                  # Play Games
+com.android.printspooler                       # printing, no printers on a stick
+
+# ---- Optional, by choice. Uncomment what you don't use ----
+# Casting: Chromecast built-in (mediashell) is kept either way.
+# com.xiaomi.mitv.smartshare                   # Mi SmartShare / Mi Cast
+# com.xiaomi.wfdsinkhelperservice              # Miracast sink (screen mirroring to the stick)
+# Screensavers: point the screensaver elsewhere FIRST, for example
+#   settings put secure screensaver_components com.gathin.tvhome/.ClockDream
+# com.mitv.dream                               # Xiaomi MiDream screensaver
+# com.google.android.backdrop                  # Google ambient screensaver
+# Media and legal:
+# com.mitv.videoplayer                         # Mi video player
+# com.google.android.videos                    # Play Movies & TV
+# com.google.android.youtube.tvmusic           # YouTube Music
+# com.xiaomo.tv.milegal                        # Xiaomi legal / privacy screens, off in mooq0; left on here until tested
+
+# ---- Only if needed: setup wizard ----
+# com.google.android.tungsten.setupwraith does not claim HOME on this stick (see the header), so it should
+# stay enabled. Do NOT disable it unless build-and-install.sh reports that Home does not resolve to the
+# new launcher even though the stock launcher is off.
+# If it is ever needed, disable it BEFORE the stock launcher (xiaomi-mitv-afmu0: the other order lost
+# Wi-Fi and ADB), expect Wi-Fi to drop for a moment and the password to be asked again
+# (xiaomi-mi-box-s-2nd-gen), and keep the line in this file so tools/restore.sh re-enables it
+# before any factory reset or remote re-pairing.
+# com.google.android.tungsten.setupwraith
+  
