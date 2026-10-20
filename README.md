@@ -74,6 +74,8 @@ phoning home, no apps you never asked for.
 | *The grid, one glass highlight, the tile's name* | *Clock screensaver, drifts so nothing burns in* |
 | ![The aurora theme: a wallpaper and tinted pills, pushed without a rebuild](docs/theme-aurora.jpg) | ![Six columns and a six-app dock from a theme's config.json](docs/theme-six-columns.jpg) |
 | *Aurora theme, pushed with `tools/theme.sh`* | *Six columns and a six-app dock, same launcher* |
+| ![Moving a tile: held OK, chose Move, the tile is picked up and the others dim](docs/tile-move.jpg) | ![The App library: installed apps, one press adds an app back to Home](docs/app-library.jpg) |
+| *Hold OK on a tile, Move: arrows carry it, Back puts it down* | *App library: one press puts a removed app back on Home* |
 
 ## Supported TVs
 
