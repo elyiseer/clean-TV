@@ -247,6 +247,7 @@ tools/theme.sh themes/aurora                                 # push a theme; --r
 | [`tools/b64push.py`](tools/b64push.py) | Uploads large files such as APKs in base64 chunks and verifies the checksum. |
 | [`tools/disable.sh`](tools/disable.sh), [`restore.sh`](tools/restore.sh) | Apply or undo a debloat list, the undo from the state recorded before the change. |
 | [`tools/recovery.py`](tools/recovery.py) | Writes the record `disable.sh` needs to undo itself, and prints the restore batch. |
+| [`tools/privacy.py`](tools/privacy.py) | Audits the TV for voice, ACR and telemetry candidates and prints the evidence for each; `--write` turns the findings into a list `disable.sh` and `restore.sh` already understand. |
 | [`tools/theme.sh`](tools/theme.sh) | Push a folder from [`themes/`](themes/) to the launcher and restart Home. |
 | [`tools/race_calendar.py`](tools/race_calendar.py) | Writes this season's F1 calendar into a theme for race-weekend mode, from the free Jolpica API. |
 | [`launcher/build-and-install.sh`](launcher/build-and-install.sh) | Builds a shrunk release (about 390 KB), installs it, switches Home, and rolls back if Home does not land on it. |
@@ -272,6 +273,32 @@ contains the app that owns Home and no other app on the TV answers HOME, it skip
 why, and disables the rest of the list. So a list applied before the launcher handover cannot leave
 the TV with nothing to start. Run the same list again once `launcher/build-and-install.sh` has made
 the new launcher Home and the entry is applied; `FORCE_HOME=1` (`$env:FORCE_HOME`) disables it anyway.
+
+## The microphone, and what can be said about it
+
+"Which of these packages is listening?" has no honest one-line answer, and a permission scan makes
+it worse: on many sets most packages run as `android.uid.system`, so fifty of them show
+`RECORD_AUDIO: granted=true` and none of them record anything. On others the microphone is in the
+remote, not the panel, and a package with no audio permission at all still sees everything on screen
+— ACR clients such as `tv.inscape.tvclient.inscapeacr` identify content from the picture and need
+only `INTERNET`.
+
+`tools/privacy.py` reports what the TV actually says instead of guessing:
+`TV_HOST=192.168.1.50 tools/venv/bin/python -I tools/privacy.py` prints voice, ACR and telemetry
+candidates in three groups, each with its evidence — named by the firmware's own
+`voice_interaction_service`, a known component from [`examples/`](examples/), or nothing but a
+matching name — plus whether the package declares `RECORD_AUDIO`, whether it shares the system UID,
+and whether `appops` shows the microphone op was ever used since boot.
+
+`--write privacy.txt` turns the identified candidates into a normal debloat list, so applying it and
+undoing it are the commands you already use (`tools/disable.sh`, `tools/restore.sh`). Packages that
+only matched by name stay out unless you pass `--include-low`; they are the ones to check with
+`dumpsys package <name>` first.
+
+What the audit cannot do is prove intent. `appops` shows an op was touched, not what happened to the
+stream afterwards, and no scan of package names proves a TV is or is not recording. Disabling an
+assistant is a trade you make with a specific loss (the remote's mic button, voice search inside
+apps), which is why the report names that loss per package instead of calling it a win.
 
 ## The launcher
 
