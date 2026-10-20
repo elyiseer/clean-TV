@@ -195,6 +195,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private String movingKey;
     /** Tile order when reorder mode started, to save only when something moved. */
     private List<String> orderAtStart;
+    /**
+     * fill_dock false: tiles in the dock when reorder mode started, plus those carried or swapped into it since
+     * (#499). A grid app that only slid into a free slot, which reorder mode does not show, is not one of them.
+     */
+    private Set<String> dockInSession;
+    /** fill_dock false: how many dock slots held an app when reorder mode started. */
+    private int dockedAtStart;
     private View btnReorder;
     /** dock_apps as loaded (config.xml or a theme): a saved Order only applies while these are unchanged. */
     private List<String> dockApps;
@@ -403,7 +410,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         adapter = new AppAdapter(this, this, COLUMNS, cfg);
         dockApps = cfg.dockApps;
         fillDockLeavesSlots = !cfg.fillDock;
-        adapter.setSavedOrder(Order.ranks(Order.load(Order.file(this)), dockApps));
+        Order savedOrder = Order.load(Order.file(this));
+        adapter.setSavedOrder(Order.ranks(savedOrder, dockApps), Order.docked(savedOrder, dockApps));
         grid.setAdapter(adapter);
 
         // tvOS layout: push the dock row towards the bottom of the screen, leaving room for
@@ -828,6 +836,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The start shared by reorder and edit-dock mode. False when there is nothing to move. */
     private boolean beginReorder() {
         if (adapter.movableCount() < 2) return false;
+        // Before the reload below: once it has dropped the empty slots, the dock row also shows grid apps.
+        dockInSession = new HashSet<>();
+        dockedAtStart = adapter.dockFilled();
+        for (int i = 0; i < Math.min(dockedAtStart, adapter.movableCount()); i++) dockInSession.add(adapter.keyAt(i));
         adapter.setReordering(true);
         if (adapter.hasEmptySlots()) reloadTiles();   // every position must hold a tile that can move
         reordering = true;
@@ -899,6 +911,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 adapter.move(pos, slot);
                 adapter.move(adapter.positionOf(slotKey), pos);
             });
+            dockInSession.add(adapter.keyAt(slot));
+            if (pos >= COLUMNS) dockInSession.remove(slotKey);
         }
         endReorder();
         refocusAfterLayout(slot);
@@ -946,10 +960,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         List<String> keys = adapter.movableKeys();
         List<String> before = orderAtStart;
         orderAtStart = null;
-        if (!keys.equals(before)) {
-            Order order = new Order(Order.dockKey(dockApps), keys);
+        // fill_dock false: the dock is what the owner put there, saved with its size, so the empty slots that
+        // come back after the mode go after it (#499). With fill_dock true every dock slot holds an app anyway.
+        int docked = -1;
+        if (fillDockLeavesSlots) {
+            docked = DockSlots.dockCount(keys, COLUMNS, dockInSession);
+            keys = DockSlots.dockFirst(keys, COLUMNS, dockInSession);
+        }
+        dockInSession = null;
+        if (!keys.equals(before) || (fillDockLeavesSlots && docked != dockedAtStart)) {
+            Order order = new Order(Order.dockKey(dockApps), keys, docked);
             if (Order.save(Order.file(this), order)) {
-                adapter.setSavedOrder(Order.ranks(order, dockApps));
+                adapter.setSavedOrder(Order.ranks(order, dockApps), Order.docked(order, dockApps));
             } else {
                 Toast.makeText(this, R.string.reorder_not_saved, Toast.LENGTH_SHORT).show();
             }
@@ -977,6 +999,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         else to = from / COLUMNS < (n - 1) / COLUMNS ? n - 1 : from;
         if (to < 0 || to >= n || to == from) return;
         keepScroll(() -> adapter.move(from, to));
+        // The owner carries this tile: where it lands decides whether it is in the dock, not dock_apps (#499).
+        if (to < COLUMNS) dockInSession.add(movingKey);
+        else dockInSession.remove(movingKey);
         refocusAfterLayout(to);
     }
 
