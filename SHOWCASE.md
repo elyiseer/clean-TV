@@ -35,6 +35,7 @@ project's own issue tracker.
 | [TV Remote](https://github.com/HoangTran0410/tv-remote) | A phone, desktop and web remote over ADB with no server or account; its Optimize TV applies this repo's lists with an undo and checks where Home lands after a launcher swap | FPT Play 650 (Android TV 14), Sony BRAVIA (Android 9) | [HoangTran0410](https://github.com/HoangTran0410) |
 | [MYO Launcher](https://github.com/faustinoaq/myo-launcher) | A minimal, ad-free home screen for cheap Android TVs, replacing the ad-filled Zeasn launcher | MYO TV (HiSilicon Hi3751V350, Android 14, 1 GB RAM) | [faustinoaq](https://github.com/faustinoaq) |
 | [CleanTV](https://github.com/0x006E/cleantv) | A launcher started from this one, with Xiaomi USB IR blaster control of cable/DTH set-top boxes, live channel rails and an encrypted LAN companion remote | Xiaomi MiTV-AXSO0 (Mi TV 4A 43"), Android TV 9 | [0x006E](https://github.com/0x006E) |
+| [TB for LG webOS](https://github.com/youngwiseone/tb-webos) ([issues](https://github.com/youngwiseone/tb-webos/issues)) | A PS2-inspired webOS home built on partridgeworks/webos-launcher: memory-card apps and HDMI inputs, six recent shortcuts, a drifting idle view and original time-of-day startup visuals. Optional Homebrew discovery/picture controls and a separately configured Steam friends relay | LG OLED48C24LA, webOS 24; TV-tested predecessor, public build PC-tested | [youngwiseone](https://github.com/youngwiseone) |
 
 ## Add yours
 
