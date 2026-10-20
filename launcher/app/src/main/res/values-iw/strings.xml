@@ -62,4 +62,10 @@
     <string name="quick_network">רשת</string>
     <string name="quick_apps">אפליקציות</string>
     <string name="quick_apps_hint">הפעלה מחדש</string>
+    <string name="phone_control">שליטה מהטלפון</string>
+    <string name="phone_control_hint">פתחו את הקישור הזה בטלפון שמחובר לאותה רשת Wi-Fi, או סרקו את הקוד, כדי לשנות את ההגדרות האלה מהטלפון.</string>
+    <string name="phone_control_new_code">קוד חדש</string>
+    <string name="phone_control_qr">קוד QR לקישור השליטה מהטלפון</string>
+    <string name="phone_control_off">כבוי</string>
+    <string name="phone_control_offline">לא מחובר</string>
 </resources>

@@ -58,4 +58,10 @@
     <string name="on">تشغيل</string>
     <string name="off">إيقاف</string>
     <string name="enable">تفعيل</string>
+    <string name="phone_control">التحكم من الهاتف</string>
+    <string name="phone_control_hint">افتح هذا الرابط على هاتف متصل بنفس شبكة Wi-Fi، أو امسح الرمز، لتغيير هذه الإعدادات من الهاتف.</string>
+    <string name="phone_control_new_code">رمز جديد</string>
+    <string name="phone_control_qr">رمز QR لرابط التحكم من الهاتف</string>
+    <string name="phone_control_off">متوقف</string>
+    <string name="phone_control_offline">غير متصل</string>
 </resources>

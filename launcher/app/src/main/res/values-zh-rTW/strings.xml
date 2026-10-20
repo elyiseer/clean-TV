@@ -58,4 +58,10 @@
     <string name="card_state_new">新的</string>
     <string name="card_state_new_key">新金鑰</string>
     <string name="card_state_new_label">新名稱</string>
+    <string name="phone_control">手機控制</string>
+    <string name="phone_control_hint">在連上同一個 Wi-Fi 的手機開啟此連結或掃描 QR 碼，即可在手機上變更這些設定。</string>
+    <string name="phone_control_new_code">新代碼</string>
+    <string name="phone_control_qr">手機控制連結的 QR 碼</string>
+    <string name="phone_control_off">關閉</string>
+    <string name="phone_control_offline">未連線</string>
 </resources>

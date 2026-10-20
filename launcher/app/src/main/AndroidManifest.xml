@@ -14,6 +14,9 @@
          FINE" rule does not apply here. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
         tools:ignore="CoarseFineLocation" />
+    <!-- Phone control only (web_control, off by default): a server for phones on the home network. The
+         launcher makes no outgoing connections. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Android 11+ package visibility: lets the launcher list the TV apps it shows as tiles, and the
          apps that declare a module card (docs/specs/card.md). -->

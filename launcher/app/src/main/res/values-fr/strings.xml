@@ -58,4 +58,10 @@
     <string name="on">Activé</string>
     <string name="off">Désactivé</string>
     <string name="enable">Activer</string>
+    <string name="phone_control">Contrôle depuis le téléphone</string>
+    <string name="phone_control_hint">Ouvrez ce lien sur un téléphone connecté au même Wi-Fi, ou scannez le code, pour modifier ces réglages depuis le téléphone.</string>
+    <string name="phone_control_new_code">Nouveau code</string>
+    <string name="phone_control_qr">Code QR du lien de contrôle depuis le téléphone</string>
+    <string name="phone_control_off">Désactivé</string>
+    <string name="phone_control_offline">Non connecté</string>
 </resources>

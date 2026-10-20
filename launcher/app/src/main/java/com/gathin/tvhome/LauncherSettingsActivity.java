@@ -5,11 +5,23 @@ import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.LinkAddress;
+import android.net.LinkProperties;
+import android.net.Network;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.net.Inet4Address;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /** Remote-friendly settings owned by the launcher; system settings stay one row away. */
 public final class LauncherSettingsActivity extends Activity {
@@ -90,8 +102,59 @@ public final class LauncherSettingsActivity extends Activity {
         });
         findViewById(R.id.tvSettingsChoice).setOnClickListener(v ->
                 open(new Intent(Settings.ACTION_SETTINGS)));
+        if (config.webControl) showPhoneControl();
         refresh();
         columnChoices[Math.max(0, Math.min(columns - 4, 3))].requestFocus();
+    }
+
+    /** The phone page's link with its code and a QR code for it; New code locks out phones with the old one. */
+    private void showPhoneControl() {
+        findViewById(R.id.phoneControl).setVisibility(View.VISIBLE);
+        TextView url = findViewById(R.id.phoneControlUrl);
+        ImageView qr = findViewById(R.id.phoneControlQr);
+        Runnable show = () -> {
+            String ip = ipv4Address();
+            int port = WebControl.port();
+            if (port <= 0 || ip == null) {
+                url.setText(port <= 0 ? R.string.phone_control_off : R.string.phone_control_offline);
+                qr.setImageDrawable(null);
+                return;
+            }
+            String link = WebControl.url(ip, port, WebControl.code(this));
+            url.setText(link);
+            qr.setImageBitmap(qrBitmap(link));
+        };
+        show.run();
+        findViewById(R.id.phoneControlNewCode).setOnClickListener(v -> {
+            WebControl.newCode(this);
+            show.run();
+        });
+    }
+
+    /** The active network's IPv4 address, or null when offline. */
+    private String ipv4Address() {
+        ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+        Network n = cm != null ? cm.getActiveNetwork() : null;
+        LinkProperties lp = n != null ? cm.getLinkProperties(n) : null;
+        if (lp == null) return null;
+        for (LinkAddress a : lp.getLinkAddresses()) {
+            if (a.getAddress() instanceof Inet4Address) return a.getAddress().getHostAddress();
+        }
+        return null;
+    }
+
+    /** A QR code, black on white with a quiet zone, scaled up without smoothing so the modules stay sharp. */
+    private static Bitmap qrBitmap(String text) {
+        boolean[][] m = Qr.encode(text.getBytes(StandardCharsets.UTF_8));
+        if (m == null) return null;
+        int n = m.length + 8;
+        int[] px = new int[n * n];
+        Arrays.fill(px, Color.WHITE);
+        for (int y = 0; y < m.length; y++) {
+            for (int x = 0; x < m.length; x++) if (m[y][x]) px[(y + 4) * n + x + 4] = Color.BLACK;
+        }
+        Bitmap small = Bitmap.createBitmap(px, n, n, Bitmap.Config.RGB_565);
+        return Bitmap.createScaledBitmap(small, n * 8, n * 8, false);
     }
 
     private void setAdvanced(boolean enabled) {

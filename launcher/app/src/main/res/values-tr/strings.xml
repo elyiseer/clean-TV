@@ -58,4 +58,10 @@
     <string name="on">Açık</string>
     <string name="off">Kapalı</string>
     <string name="enable">Etkinleştir</string>
+    <string name="phone_control">Telefondan kontrol</string>
+    <string name="phone_control_hint">Bu ayarları telefondan değiştirmek için bu bağlantıyı aynı Wi-Fi\'deki bir telefonda açın veya kodu tarayın.</string>
+    <string name="phone_control_new_code">Yeni kod</string>
+    <string name="phone_control_qr">Telefondan kontrol bağlantısının QR kodu</string>
+    <string name="phone_control_off">Kapalı</string>
+    <string name="phone_control_offline">Bağlı değil</string>
 </resources>

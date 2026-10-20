@@ -33,4 +33,10 @@
     <string name="on">เปิด</string>
     <string name="off">ปิด</string>
     <string name="enable">เปิดใช้งาน</string>
+    <string name="phone_control">ควบคุมจากโทรศัพท์</string>
+    <string name="phone_control_hint">เปิดลิงก์นี้บนโทรศัพท์ที่ใช้ Wi-Fi เดียวกัน หรือสแกนโค้ด เพื่อเปลี่ยนการตั้งค่าเหล่านี้จากโทรศัพท์</string>
+    <string name="phone_control_new_code">รหัสใหม่</string>
+    <string name="phone_control_qr">คิวอาร์โค้ดสำหรับลิงก์ควบคุมจากโทรศัพท์</string>
+    <string name="phone_control_off">ปิด</string>
+    <string name="phone_control_offline">ไม่ได้เชื่อมต่อ</string>
 </resources>

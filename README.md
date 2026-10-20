@@ -346,6 +346,13 @@ same as developing an Android app. Network ADB is plaintext on port 5555, and on
 
 The launcher keeps working without debugging.
 
+**Does the launcher open a port?** Only with Phone control switched on (`"web_control": true`, off by
+default). It then serves a page on the home network, on port 8080 (`web_port`), for the launcher's own
+layout settings. Only local addresses get an answer, every request needs the six-digit code shown in
+Launcher settings (with a QR code; "New code" locks out phones that had the old one), wrong codes are
+rate-limited, and changes need a header a form on another site cannot send. It cannot install apps,
+touch ADB or change system settings.
+
 **Can it block ads inside apps too?** Partly, with Android's Private DNS (Android 9 and newer). Point
 it at an ad-blocking resolver such as [AdGuard DNS](https://adguard-dns.io) and every app's ad and
 tracker domains stop resolving, system-wide, surviving reboots. The trade-off: that resolver then

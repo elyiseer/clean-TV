@@ -32,4 +32,10 @@
     <string name="on">Sí</string>
     <string name="off">No</string>
     <string name="enable">Activar</string>
+    <string name="phone_control">Control desde el móvil</string>
+    <string name="phone_control_hint">Abre este enlace en un móvil de la misma Wi-Fi, o escanea el código, para cambiar estos ajustes desde el móvil.</string>
+    <string name="phone_control_new_code">Código nuevo</string>
+    <string name="phone_control_qr">Código QR del enlace de control desde el móvil</string>
+    <string name="phone_control_off">Desactivado</string>
+    <string name="phone_control_offline">Sin conexión</string>
 </resources>

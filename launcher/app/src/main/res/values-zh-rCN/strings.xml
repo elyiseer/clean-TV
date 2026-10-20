@@ -34,4 +34,10 @@
     <string name="cant_open">无法打开 %1$s</string>
     <string name="date_format">M月d日 EEEE</string>
     <string name="dream_name">时钟</string>
+    <string name="phone_control">手机控制</string>
+    <string name="phone_control_hint">在连接同一 Wi-Fi 的手机上打开此链接或扫描二维码，即可在手机上更改这些设置。</string>
+    <string name="phone_control_new_code">新代码</string>
+    <string name="phone_control_qr">手机控制链接的二维码</string>
+    <string name="phone_control_off">关闭</string>
+    <string name="phone_control_offline">未连接</string>
 </resources>

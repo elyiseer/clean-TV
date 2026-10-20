@@ -49,6 +49,9 @@ final class Config {
     final boolean advancedEffects;
     final int rowsBelowDock;
     final boolean shamsiDate;
+    /** The phone control page on the home network (web_control), and its port (web_port). */
+    final boolean webControl;
+    final int webPort;
     final boolean moduleCards;
     /** Calmer motion for weak GPUs (config.xml, reduced_motion): stiff spring, short fades, no replay. */
     final boolean reducedMotion;
@@ -72,7 +75,7 @@ final class Config {
     private Config(List<String> dockApps, boolean fillDock, List<String> hiddenApps, String liveTvPackage,
                    String liveTvAction, String sourcePanelService, String sourcePanelAction, String inputAction,
                    int columns, int rowsBelowDock, boolean animations, boolean advancedEffects,
-                   boolean shamsiDate, boolean moduleCards, boolean reducedMotion, String vpnApp,
+                   boolean shamsiDate, boolean webControl, int webPort, boolean moduleCards, boolean reducedMotion, String vpnApp,
                    boolean showHomeSettingsShortcut, int backgroundColor, int skyIntensity,
                    int[] settingsKeycodes, boolean settingsKeyPanel, File wallpaper, boolean overlayApplied,
                    Festival festival) {
@@ -89,6 +92,8 @@ final class Config {
         this.animations = animations;
         this.advancedEffects = advancedEffects;
         this.shamsiDate = shamsiDate;
+        this.webControl = webControl;
+        this.webPort = webPort;
         this.moduleCards = moduleCards;
         this.reducedMotion = reducedMotion;
         this.vpnApp = vpnApp;
@@ -122,6 +127,8 @@ final class Config {
         boolean animations = res.getBoolean(R.bool.animations);
         boolean advancedEffects = res.getBoolean(R.bool.advanced_effects);
         boolean shamsi = res.getBoolean(R.bool.shamsi_date);
+        boolean webControl = res.getBoolean(R.bool.web_control);
+        int webPort = res.getInteger(R.integer.web_port);
         boolean moduleCards = res.getBoolean(R.bool.module_cards);
         boolean reducedMotion = res.getBoolean(R.bool.reduced_motion);
         String vpn = res.getString(R.string.vpn_app).trim();
@@ -150,6 +157,8 @@ final class Config {
             animations = bool(json, "animations", animations);
             advancedEffects = bool(json, "advanced_effects", advancedEffects);
             shamsi = bool(json, "shamsi_date", shamsi);
+            webControl = bool(json, "web_control", webControl);
+            webPort = integer(json, "web_port", webPort, 1024, 65535);
             moduleCards = bool(json, "module_cards", moduleCards);
             reducedMotion = bool(json, "reduced_motion", reducedMotion);
             vpn = string(json, "vpn_app", vpn);
@@ -177,7 +186,7 @@ final class Config {
 
         return new Config(dock, fillDock, hidden, liveTv, liveTvAction, panelService, panelAction, inputAction,
                 Math.max(1, columns), Math.max(0, rowsBelow), animations, advancedEffects,
-                shamsi, moduleCards, reducedMotion, vpn, homeSettings, background,
+                shamsi, webControl, Math.max(1024, Math.min(65535, webPort)), moduleCards, reducedMotion, vpn, homeSettings, background,
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, wallpaper, applied,
                 festival);
     }

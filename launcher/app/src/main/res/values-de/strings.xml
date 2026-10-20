@@ -35,4 +35,10 @@
     <string name="on">Ein</string>
     <string name="off">Aus</string>
     <string name="enable">Aktivieren</string>
+    <string name="phone_control">Steuerung per Handy</string>
+    <string name="phone_control_hint">Öffne diesen Link auf einem Handy im selben WLAN oder scanne den Code, um diese Einstellungen vom Handy aus zu ändern.</string>
+    <string name="phone_control_new_code">Neuer Code</string>
+    <string name="phone_control_qr">QR-Code für den Link zur Handy-Steuerung</string>
+    <string name="phone_control_off">Aus</string>
+    <string name="phone_control_offline">Nicht verbunden</string>
 </resources>

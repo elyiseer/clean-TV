@@ -491,11 +491,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onResume() {
         super.onResume();
-        // A festival that started or ended while Home was in the background: rebuild with or without it.
-        if (festive != festival.active(LocalDate.now())) {
+        // A festival that started or ended while Home was in the background, or settings changed from the
+        // phone page meanwhile: rebuild.
+        if (festive != festival.active(LocalDate.now()) || WebControl.takeChanged()) {
             recreate();
             return;
         }
+        // Phone control (web_control): the server runs for the process; while Home is in front, a change
+        // from the phone rebuilds it at once.
+        Config web = Config.load(this);
+        WebControl.start(this, web.webControl, web.webPort);
+        WebControl.remote = () -> handler.post(() -> {
+            if (!isFinishing()) recreate();
+        });
         promptsPaused = false;
         if (rebuildOnResume) {
             tilesReady = false;
@@ -588,6 +596,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onPause() {
         super.onPause();
+        WebControl.remote = null;
         stopAmbientAnimation();
         heroName.animate().cancel();
         ambient.animate().cancel();

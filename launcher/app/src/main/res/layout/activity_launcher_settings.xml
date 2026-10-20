@@ -92,5 +92,58 @@
             style="@style/SettingsRow"
             android:layout_marginTop="18dp"
             android:text="@string/tv_settings" />
+
+        <!-- Phone control (web_control): the page's link with its code, a QR code for it, and a new code. -->
+        <LinearLayout
+            android:id="@+id/phoneControl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/phone_control"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/phoneControlUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:textColor="#FFACB8C1"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:text="@string/phone_control_hint"
+                    android:textColor="#FFACB8C1"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/phoneControlNewCode"
+                    style="@style/SettingsRow"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/phone_control_new_code" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/phoneControlQr"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_marginStart="24dp"
+                android:contentDescription="@string/phone_control_qr" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

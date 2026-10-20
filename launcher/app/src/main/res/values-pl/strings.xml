@@ -58,4 +58,10 @@
     <string name="on">Wł.</string>
     <string name="off">Wył.</string>
     <string name="enable">Włącz</string>
+    <string name="phone_control">Sterowanie z telefonu</string>
+    <string name="phone_control_hint">Otwórz ten link na telefonie w tej samej sieci Wi-Fi lub zeskanuj kod, aby zmieniać te ustawienia z telefonu.</string>
+    <string name="phone_control_new_code">Nowy kod</string>
+    <string name="phone_control_qr">Kod QR linku do sterowania z telefonu</string>
+    <string name="phone_control_off">Wyłączone</string>
+    <string name="phone_control_offline">Brak połączenia</string>
 </resources>

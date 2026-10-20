@@ -64,6 +64,12 @@
     <!-- Show the Solar Hijri (Shamsi) date used in Iran and Afghanistan, e.g. "27 Mehr 1405", above the
          Gregorian date. -->
     <bool name="shamsi_date">false</bool>
+
+    <!-- Phone control: a page on the home network (http://TV-address:web_port/) where a phone changes the
+         launcher's settings. Only local addresses get an answer and every request needs the six-digit code
+         shown on the TV, in Launcher settings (hold OK on Settings), with a QR code for the link. -->
+    <bool name="web_control">false</bool>
+    <integer name="web_port">8080</integer>
     <!-- Optional VPN app the network pill opens (hold the pill for Wi-Fi settings), e.g. the package of the
          VPN you use. Empty: the pill opens Wi-Fi settings. The green VPN badge shows for any VPN either way;
          with an app set here, a red "VPN off" badge also shows while no VPN is up. -->

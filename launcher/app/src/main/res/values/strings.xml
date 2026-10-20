@@ -64,4 +64,10 @@
     <string name="card_state_new">New</string>
     <string name="card_state_new_key">New key</string>
     <string name="card_state_new_label">New name</string>
+    <string name="phone_control">Phone control</string>
+    <string name="phone_control_hint">Open this link on a phone on the same Wi-Fi, or scan the code, to change these settings from the phone.</string>
+    <string name="phone_control_new_code">New code</string>
+    <string name="phone_control_qr">QR code for the phone control link</string>
+    <string name="phone_control_off">Off</string>
+    <string name="phone_control_offline">Not connected</string>
 </resources>

@@ -46,4 +46,10 @@
     <string name="card_state_new">Novo</string>
     <string name="card_state_new_key">Nova chave</string>
     <string name="card_state_new_label">Novo nome</string>
+    <string name="phone_control">Controle pelo celular</string>
+    <string name="phone_control_hint">Abra este link em um celular na mesma rede Wi-Fi, ou leia o código, para mudar estas configurações pelo celular.</string>
+    <string name="phone_control_new_code">Novo código</string>
+    <string name="phone_control_qr">Código QR do link de controle pelo celular</string>
+    <string name="phone_control_off">Desativado</string>
+    <string name="phone_control_offline">Sem conexão</string>
 </resources>

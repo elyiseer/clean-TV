@@ -31,4 +31,10 @@
     <string name="on">Activat</string>
     <string name="off">Desactivat</string>
     <string name="enable">Activa</string>
+    <string name="phone_control">Control des del mòbil</string>
+    <string name="phone_control_hint">Obre aquest enllaç en un mòbil de la mateixa Wi-Fi, o escaneja el codi, per canviar aquests ajustos des del mòbil.</string>
+    <string name="phone_control_new_code">Codi nou</string>
+    <string name="phone_control_qr">Codi QR de l\'enllaç de control des del mòbil</string>
+    <string name="phone_control_off">Desactivat</string>
+    <string name="phone_control_offline">Sense connexió</string>
 </resources>

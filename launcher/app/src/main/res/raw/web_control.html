@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Home</title>
+<style>
+  :root {
+    --bg: #000; --card: #15171c; --line: #2a2d34; --text: #f2f2f2; --mid: #a3a6ad; --accent: #fff;
+    --ok: #4cd787; --bad: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.4 "Outfit", ui-rounded, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) 16px 40px;
+  }
+  h1 { font-weight: 300; font-size: 28px; margin: 8px 4px 20px; letter-spacing: -0.02em; }
+  h2 { font-weight: 500; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mid); margin: 28px 4px 10px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--line); }
+  .row:first-child { border-top: 0; }
+  .row label { flex: 1; }
+  .switch { position: relative; width: 50px; height: 30px; flex: none; }
+  /* The real checkbox covers the whole switch, invisible, so a tap anywhere on it toggles. */
+  .switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; z-index: 1; cursor: pointer; }
+  .switch span { position: absolute; inset: 0; background: #3a3d44; border-radius: 15px; transition: background .2s; }
+  .switch span::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; transition: transform .2s;
+  }
+  .switch input:checked + span { background: var(--ok); }
+  .switch input:checked + span::after { transform: translateX(20px); }
+  .switch input:disabled + span { opacity: .45; }
+  button {
+    background: #fff; color: #000; border: 0; border-radius: 22px; padding: 11px 18px; font: inherit;
+    font-weight: 500; cursor: pointer;
+  }
+  button:disabled { opacity: .45; }
+  .seg { display: flex; gap: 6px; }
+  .seg button { padding: 7px 14px; min-width: 44px; }
+  .seg button:not(.on) { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  .note { color: var(--mid); font-size: 13px; padding: 0 16px 14px; }
+  #status { position: fixed; left: 16px; right: 16px; bottom: 16px; padding: 12px 16px; border-radius: 14px;
+    background: #fff; color: #000; font-weight: 500; opacity: 0; transition: opacity .25s; pointer-events: none; }
+  #status.show { opacity: 1; }
+  #status.bad { background: var(--bad); color: #fff; }
+</style>
+</head>
+<body>
+<h1>Home</h1>
+
+<!-- One card per section; each matches a key of /api/state. -->
+<section id="layout">
+<h2>Layout</h2>
+<div class="card">
+  <div class="row"><label>Tiles per row</label><span class="seg" id="columns"></span></div>
+  <div class="row"><label for="animations">Animations</label><span class="switch"><input type="checkbox" id="animations"><span></span></span></div>
+  <div class="row"><label for="advanced_effects">Advanced effects</label><span class="switch"><input type="checkbox" id="advanced_effects"><span></span></span></div>
+  <div class="note">Advanced effects need animations and a TV with a strong GPU.</div>
+  <div class="row"><label>Use the theme's layout</label><button id="follow_theme">Use theme</button></div>
+</div>
+</section>
+
+<div id="status"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  // Sent on every request; the TV refuses changes without it, so a form on another site can't make them.
+  const H = { 'X-Requested-With': 'tvhome' };
+  let timer;
+
+  function say(text, bad) {
+    const s = $('status');
+    s.textContent = text;
+    s.className = 'show' + (bad ? ' bad' : '');
+    clearTimeout(timer);
+    timer = setTimeout(() => { s.className = ''; }, 2600);
+  }
+
+  async function call(method, path, body, headers) {
+    const r = await fetch(path, { method, body, headers: Object.assign({}, H, headers || {}), credentials: 'same-origin' });
+    let data = {};
+    try { data = await r.json(); } catch (e) {}
+    if (!r.ok) throw new Error(data.error || ('Error ' + r.status));
+    return data;
+  }
+
+  // Columns buttons, built once.
+  for (const n of [4, 5, 6, 7]) {
+    const b = document.createElement('button');
+    b.textContent = n;
+    b.dataset.n = n;
+    b.addEventListener('click', () => save({ layout: { columns: n } }));
+    $('columns').appendChild(b);
+  }
+
+  function render(s) {
+    const l = s.layout || {};
+    for (const b of $('columns').children) b.className = Number(b.dataset.n) === l.columns ? 'on' : '';
+    $('animations').checked = !!l.animations;
+    $('advanced_effects').checked = !!l.advanced_effects;
+    $('advanced_effects').disabled = !l.animations;
+    $('follow_theme').disabled = !!l.follow_theme;
+    $('follow_theme').textContent = l.follow_theme ? 'In use' : 'Use theme';
+  }
+
+  async function load() {
+    try { render(await call('GET', '/api/state')); } catch (e) { say(e.message, true); }
+  }
+
+  async function save(patch) {
+    try {
+      const s = await call('POST', '/api/settings', JSON.stringify(patch), { 'Content-Type': 'application/json' });
+      render(s);
+      say(s.home ? 'Saved' : 'Saved · applies when Home is back on screen');
+    } catch (e) { say(e.message, true); load(); }
+  }
+
+  for (const k of ['animations', 'advanced_effects']) {
+    $(k).addEventListener('change', () => save({ layout: { [k]: $(k).checked } }));
+  }
+  $('follow_theme').addEventListener('click', () => save({ layout: { follow_theme: true } }));
+
+  load();
+})();
+</script>
+</body>
+</html>

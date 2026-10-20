@@ -39,4 +39,10 @@
     <string name="on">Uklj.</string>
     <string name="off">Isklj.</string>
     <string name="enable">Uključi</string>
+    <string name="phone_control">Kontrola sa telefona</string>
+    <string name="phone_control_hint">Otvorite ovaj link na telefonu na istoj Wi-Fi mreži ili skenirajte kod da biste menjali ova podešavanja sa telefona.</string>
+    <string name="phone_control_new_code">Novi kod</string>
+    <string name="phone_control_qr">QR kod za link kontrole sa telefona</string>
+    <string name="phone_control_off">Isključeno</string>
+    <string name="phone_control_offline">Nije povezano</string>
 </resources>

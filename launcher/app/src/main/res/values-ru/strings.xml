@@ -58,4 +58,10 @@
     <string name="on">Вкл.</string>
     <string name="off">Выкл.</string>
     <string name="enable">Включить</string>
+    <string name="phone_control">Управление с телефона</string>
+    <string name="phone_control_hint">Откройте эту ссылку на телефоне в той же сети Wi-Fi или отсканируйте код, чтобы менять эти настройки с телефона.</string>
+    <string name="phone_control_new_code">Новый код</string>
+    <string name="phone_control_qr">QR-код ссылки для управления с телефона</string>
+    <string name="phone_control_off">Выкл.</string>
+    <string name="phone_control_offline">Нет подключения</string>
 </resources>
