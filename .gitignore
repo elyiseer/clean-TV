@@ -7,6 +7,7 @@ launcher/app/build/
 launcher/local.properties
 # your own TV's dumps (serial, android_id, device names) stay local
 backup/
+backups/
 .DS_Store
 
 # Generated install bundles and JVM crash reports stay out of contributions.
@@ -14,3 +15,4 @@ backup/
 *.aab
 launcher/hs_err_pid*.log
 launcher/replay_pid*.log
+.back

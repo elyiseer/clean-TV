@@ -2,13 +2,13 @@
   <a href="https://cleanyour.tv"><img src="https://raw.githubusercontent.com/Gathin23/cleanyourtv/main/docs/banner.png" alt="CleanYourTV. Your TV, minus the ads." width="800"></a>
 </p>
 
-<h3 align="center">123 TV models &nbsp;·&nbsp; 42 brands &nbsp;·&nbsp; 19 languages &nbsp;·&nbsp; 390 KB launcher</h3>
+<h3 align="center">124 TV models &nbsp;·&nbsp; 38 brands &nbsp;·&nbsp; 18 languages &nbsp;·&nbsp; 390 KB launcher</h3>
 
 <p align="center">
   <a href="https://cleanyour.tv">cleanyour.tv</a> ·
   <a href="PROMPT.md">The prompt</a> ·
-  <a href="examples/">123 TV lists</a> ·
-  <a href="SHOWCASE.md">25 built on it</a> ·
+  <a href="examples/">124 TV lists</a> ·
+  <a href="SHOWCASE.md">26 built on it</a> ·
   <a href="https://x.com/gathint/status/2111379569030939102">The tweet</a> ·
   <a href="README.zh-CN.md">简体中文</a>
 </p>
@@ -120,7 +120,7 @@ Tested lists from contributors, one folder per model in [`examples/`](examples/)
 **Panasonic** 3 · **BenQ** 2 · **CHiQ** 2 · **Haier** 2 · **Hitachi** 2 · **NVIDIA Shield** 2 · **Skyworth** 2 ·
 **Vu** 2 · AiPro2K · AIWA · Cecotec · Chromecast with Google TV · Compac · EKO · FFalcon · Freebox ·
 Insignia Fire TV · Kalley · MTC · OnePlus · onn · Polytron · PRISM+ · RCA · Redmi · SANYO · Tele System ·
-Thomson · Toshiba Fire TV · Vidda ·
+Thomson · Toshiba Fire TV · Vidda · Motorola ·
 BYINTEK, JMGO, Portronics, Stellamore, Wanbo and XGIMI projectors
 
 <details>
@@ -158,6 +158,7 @@ BYINTEK, JMGO, Portronics, Stellamore, Wanbo and XGIMI projectors
 | Insignia 55" F30 4K Fire TV (NS-55F301NA25, AFTDCT31, duckie) | Fire OS 7 / Android 9 |
 | JMGO N1S projector (K80A, holan, MediaTek m7332), Australia | Google TV 14 |
 | Kalley R10G (device R10G, product ACER_FFM, MOKA, Realtek RTD2875P), Latin America | Google TV 14 |
+| Motorola SWTV-24AE-FHD (Skyworth OEM, beomil, MediaTek), India/Global | Google TV 14 |
 | MTC UK 2K Android TV (tabata, MediaTek m5621; JVC-family firmware, `android.autoinstalls.config.JVC` present), UK | Android TV 11 |
 | NVIDIA SHIELD TV 2019 tube (P3430, sif) | Android TV 11 |
 | NVIDIA SHIELD TV Pro 2019 (P2897, mdarcy) | Android TV 11 |
