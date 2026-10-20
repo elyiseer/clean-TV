@@ -253,6 +253,7 @@ tools/venv/bin/python -I tools/tv.py --probe                 # model, Android ve
 tools/venv/bin/python -I tools/tv.py 'pm list packages'      # one shell command on the TV
 tools/disable.sh examples/xiaomi-mi-tv-4a/debloat.txt        # apply a debloat list
 tools/restore.sh examples/xiaomi-mi-tv-4a/debloat.txt        # undo it, stock launcher back
+tools/venv/bin/python -I tools/check.py examples/xiaomi-mi-tv-4a/debloat.txt   # what a firmware update undid
 TV_HOST=192.168.1.50 launcher/build-and-install.sh           # build the launcher and make it Home
 tools/theme.sh themes/aurora                                 # push a theme; --reset removes it
 ```
@@ -263,6 +264,7 @@ tools/theme.sh themes/aurora                                 # push a theme; --r
 | [`tools/b64push.py`](tools/b64push.py) | Uploads large files such as APKs in base64 chunks and verifies the checksum. |
 | [`tools/disable.sh`](tools/disable.sh), [`restore.sh`](tools/restore.sh) | Apply or undo a debloat list, the undo from the state recorded before the change. |
 | [`tools/recovery.py`](tools/recovery.py) | Writes the record `disable.sh` needs to undo itself, and prints the restore batch. |
+| [`tools/check.py`](tools/check.py) | Compares the TV with the list that was applied, for what a firmware update undid; `--fix` puts it back. |
 | [`tools/theme.sh`](tools/theme.sh) | Push a folder from [`themes/`](themes/) to the launcher and restart Home. |
 | [`launcher/build-and-install.sh`](launcher/build-and-install.sh) | Builds a shrunk release (about 390 KB), installs it, switches Home, and rolls back if Home does not land on it. |
 
@@ -339,6 +341,35 @@ and does not know about packages you disabled outside the list. To switch back l
 install script again; it works out which launcher to disable even when Home has fallen back to
 Android's chooser. If the TV is unreachable, its own
 Settings → Apps page can re-enable packages too.
+
+## After a firmware update
+
+An update installs over the cleaned-up system: the listed packages come back, Home goes to the
+stock launcher, and new preloads appear that no list mentions. Nothing else here notices, so
+compare the TV with the list you applied:
+
+```bash
+TV_HOST=192.168.1.50 tools/venv/bin/python -I tools/check.py examples/<your tv>/debloat.txt
+```
+
+It prints what drifted and exits 1 when anything did, so a weekly job on a home server or a Pi is
+enough to hear about it:
+
+```bash
+0 9 * * 1 cd ~/cleanyourtv && TV_HOST=192.168.1.50 tools/venv/bin/python -I tools/check.py examples/<your tv>/debloat.txt
+```
+
+`--fix` reapplies the list to what drifted: it switches Home to the launcher the list does not
+disable (pass a package as the second argument if you run a fork), then disables the listed packages
+that came back, and reads the TV back to confirm both. It writes no recovery record, because the
+record already holds the state from before the first run: `tools/restore.sh` still returns the TV to
+stock afterwards. Home is fixed first; if no launcher is left to take it, `--fix` changes nothing
+and says so.
+
+Lists that also disable the updater get no updates at all. To install one, re-enable the updater on
+the TV, let it update, run `check.py --fix`, and disable the updater again.
+
+On Windows the same command is `tools\venv\Scripts\python.exe -I tools\check.py <list>`.
 
 ## When something goes wrong
 
