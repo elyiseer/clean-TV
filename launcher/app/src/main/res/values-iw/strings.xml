@@ -88,6 +88,11 @@
         <item quantity="other">%1$d אפליקציות</item>
     </plurals>
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="cpu_access_state">גישה למעבד דרך Shizuku: %1$s</string>
+    <string name="cpu_authorize">אישור גישה לנתוני המעבד</string>
+    <string name="cpu_authorized">הגישה לנתוני המעבד אושרה</string>
+    <string name="cpu_setup">מדריך התקנת Shizuku</string>
+    <string name="cpu_setup_help">אפשרות נוספת: יש להתקין ולהפעיל את Shizuku, ואז לאשר גישה למסך הבית. ללא root יש להפעיל שוב את Shizuku לאחר אתחול הטלוויזיה. נתוני המעבד מתעדכנים רק כשנתוני המערכת מוצגים במסך הבית.</string>
     <string name="rows_below_dock_label">שורות מתחת לעגינה</string>
     <string name="wallpaper_label">טפט</string>
     <string name="wallpaper_state">טפט: %1$s</string>

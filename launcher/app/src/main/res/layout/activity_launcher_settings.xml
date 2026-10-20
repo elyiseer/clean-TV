@@ -112,6 +112,15 @@
             android:textColor="#FFACB8C1"
             android:textSize="14sp" />
 
+        <LinearLayout android:id="@+id/cpuSettingsGroup"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:visibility="gone">
+        <TextView android:id="@+id/cpuAccessChoice" style="@style/SettingsRow" android:layout_marginTop="18dp" />
+        <TextView android:id="@+id/cpuAuthorizeChoice" style="@style/SettingsRow" android:layout_marginTop="10dp" />
+        <TextView android:id="@+id/cpuSetupChoice" style="@style/SettingsRow" android:layout_marginTop="10dp" android:text="@string/cpu_setup" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/cpu_setup_help" android:textColor="#FFACB8C1" android:textSize="14sp" />
+        </LinearLayout>
         <TextView
             android:id="@+id/tvSettingsChoice"
             style="@style/SettingsRow"

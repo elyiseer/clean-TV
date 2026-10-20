@@ -17,6 +17,7 @@ import java.util.List;
 /** Remote-friendly settings owned by the launcher; system settings stay one row away. */
 public final class LauncherSettingsActivity extends Activity {
     private SharedPreferences choices;
+    private CpuSettings cpuSettings;
     private final TextView[] columnChoices = new TextView[4];
     private final TextView[] rowChoices = new TextView[4];
     private TextView wallpaperChoice;
@@ -112,8 +113,18 @@ public final class LauncherSettingsActivity extends Activity {
         });
         findViewById(R.id.tvSettingsChoice).setOnClickListener(v ->
                 open(new Intent(Settings.ACTION_SETTINGS)));
+        cpuSettings = new CpuSettings(this);
         refresh();
         columnChoices[Math.max(0, Math.min(columns - 4, 3))].requestFocus();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (cpuSettings != null) cpuSettings.refresh();
+    }
+    @Override protected void onDestroy() {
+        if (cpuSettings != null) cpuSettings.close();
+        super.onDestroy();
     }
 
     private void reverseRow(TextView[] views) {

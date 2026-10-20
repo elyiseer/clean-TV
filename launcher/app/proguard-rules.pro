@@ -1,4 +1,7 @@
-# Shrink and optimise, but keep class and method names: the size win comes from dropping unused
-# AndroidX code, not from renaming, and readable stack traces matter more in a sideloaded app
-# where crash reports arrive as screenshots.
--dontobfuscate
+# Preserve launcher class names and public/protected methods for crash reports.
+# Shrink dependency names and private implementation details to fit the APK budget.
+-keepnames,allowoptimization class com.gathin.tvhome.**
+-keepclassmembernames,allowoptimization class com.gathin.tvhome.** { public *; protected *; }
+
+# Shizuku instantiates this service by its class name.
+-keep class com.gathin.tvhome.CpuUserService { *; }

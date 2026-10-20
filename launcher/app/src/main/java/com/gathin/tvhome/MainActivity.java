@@ -1445,12 +1445,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Background reader. Started only while Home is resumed and show_stats is on. */
     private HandlerThread statsThread;
+    private volatile ShizukuCpu privilegedCpu;
+    private volatile boolean privilegedCpuEnabled;
     /** The current run's handler; a run whose handler is no longer this one stops (volatile: read off-thread). */
     private volatile Handler statsBg;
 
     private void startStats() {
         if (statsThread != null) return;
         stats.setVisibility(View.VISIBLE);
+        privilegedCpuEnabled = ShizukuCpu.enabled(this);
+        if (privilegedCpuEnabled) { privilegedCpu = new ShizukuCpu(this); privilegedCpu.start(); }
         cpuTotalPrev = -1;
         idlePrev = -1;
         procStatDead = false;
@@ -1475,6 +1479,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void stopStats() {
         if (statsThread == null) return;
+        if (privilegedCpu != null) { privilegedCpu.close(); privilegedCpu = null; }
         statsBg.removeCallbacksAndMessages(null);
         statsThread.quit();
         statsThread = null;
@@ -1517,6 +1522,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private long idlePrev = -1, wallPrev = -1;
 
     private int cpuPercent() {
+        ShizukuCpu privileged = privilegedCpu;
+        if (privileged != null) {
+            int value = privileged.percent();
+            if (value >= 0) return value;
+        }
         if (!procStatDead) {
             int fromStat = cpuFromProcStat();
             if (fromStat != CPU_UNREADABLE) return fromStat;
