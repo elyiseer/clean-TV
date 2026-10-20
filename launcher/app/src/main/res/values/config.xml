@@ -25,6 +25,20 @@
         <item>com.mitv.gallery</item>
     </string-array>
 
+    <!-- Home shows the TV's inputs as tiles instead of apps, for a TV that is mostly a screen for a console, a
+         streaming box and a cable box: one tile per row of the Inputs menu, with the HDMI-CEC devices first under
+         the name they report and their port underneath. Apps stay reachable through Settings > Apps. A theme can
+         set "home_inputs": true. -->
+    <bool name="home_inputs">false</bool>
+    <!-- With home_inputs, a port that has HDMI-CEC devices on it keeps a tile of its own as well (the Inputs menu
+         lists only the devices). Useful behind an HDMI switch that passes CEC on without addressing its ports, where
+         the TV can only route to the port. Theme key "home_inputs_ports". -->
+    <bool name="home_inputs_ports">false</bool>
+    <!-- Inputs never shown as home_inputs tiles, by tile name ("Video", "HDMI 4") or input id from
+         `tools/tv.py 'dumpsys tv_input'`. The Inputs menu still lists them. Theme key "hidden_inputs". -->
+    <string-array name="hidden_inputs" translatable="false">
+    </string-array>
+
     <!-- The TV's Live TV / tuner app, offered at the end of the Inputs menu. Leave empty to omit. -->
     <string name="live_tv_package" translatable="false">com.mediatek.wwtv.tvcenter</string>
 

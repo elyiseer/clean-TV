@@ -68,6 +68,12 @@ final class Config {
     final boolean dockTitle;
     /** The dock as its own row: band, no names, parked low (config.xml dock_row). false: one plain grid. */
     final boolean dockRow;
+    /** Home tiles are the TV's inputs (CEC devices, HDMI ports, AV) instead of apps (config.xml home_inputs). */
+    final boolean homeInputs;
+    /** Inputs left out of the home_inputs tiles, by tile name or input id (config.xml hidden_inputs). */
+    final List<String> hiddenInputs;
+    /** A port with HDMI-CEC devices on it keeps its own home_inputs tile too (config.xml home_inputs_ports). */
+    final boolean homeInputsPorts;
     /** Reorder button in the top bar (config.xml reorder_button); the Settings long-press menu offers it either way. */
     final boolean reorderButton;
     final String vpnApp;
@@ -114,7 +120,11 @@ final class Config {
                    int[] settingsKeycodes, boolean settingsKeyPanel, boolean wallpaperEnabled, File wallpaper, List<File> wallpapers,
                    int wallpaperRotationMinutes, int wallpaperDim, boolean overlayApplied,
                    Festival festival, int[] inputKeycodes, List<String> appKeys,
-                   List<RaceWeekend.Race> raceCalendar, boolean cinematicHome) {
+                   List<RaceWeekend.Race> raceCalendar, boolean cinematicHome, boolean homeInputs,
+                   List<String> hiddenInputs, boolean homeInputsPorts) {
+        this.homeInputs = homeInputs;
+        this.hiddenInputs = Collections.unmodifiableList(hiddenInputs);
+        this.homeInputsPorts = homeInputsPorts;
         this.inputKeycodes = inputKeycodes;
         this.appKeys = Collections.unmodifiableList(appKeys);
         this.dockApps = Collections.unmodifiableList(dockApps);
@@ -186,6 +196,9 @@ final class Config {
         boolean reducedMotion = res.getBoolean(R.bool.reduced_motion);
         boolean dockTitle = res.getBoolean(R.bool.dock_title);
         boolean dockRow = res.getBoolean(R.bool.dock_row);
+        boolean homeInputs = res.getBoolean(R.bool.home_inputs);
+        List<String> hiddenInputs = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.hidden_inputs)));
+        boolean homeInputsPorts = res.getBoolean(R.bool.home_inputs_ports);
         boolean reorderButton = res.getBoolean(R.bool.reorder_button);
         String vpn = res.getString(R.string.vpn_app).trim();
         boolean homeSettings = res.getBoolean(R.bool.show_home_settings_shortcut);
@@ -226,6 +239,9 @@ final class Config {
             reducedMotion = bool(json, "reduced_motion", reducedMotion);
             dockTitle = bool(json, "dock_title", dockTitle);
             dockRow = bool(json, "dock_row", dockRow);
+            homeInputs = bool(json, "home_inputs", homeInputs);
+            hiddenInputs = stringList(json, "hidden_inputs", hiddenInputs);
+            homeInputsPorts = bool(json, "home_inputs_ports", homeInputsPorts);
             reorderButton = bool(json, "reorder_button", reorderButton);
             vpn = string(json, "vpn_app", vpn);
             homeSettings = bool(json, "show_home_settings_shortcut", homeSettings);
@@ -291,7 +307,7 @@ final class Config {
                 shamsi, greetingName, moduleCards, reducedMotion, dockTitle, dockRow, reorderButton, vpn, homeSettings, showStats, library, background,
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, wallpaperEnabled, wallpaper,
                 wallpapers, rotationMinutes, wallpaperDim, applied,
-                festival, inputKeycodes, appKeys, json == null ? Collections.emptyList() : raceCalendar(json), cinematic);
+                festival, inputKeycodes, appKeys, json == null ? Collections.emptyList() : raceCalendar(json), cinematic, homeInputs, hiddenInputs, homeInputsPorts);
     }
 
     /**

@@ -168,6 +168,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean reducedMotion;
     /** config.xml dock_row: the first row is a separate dock (band, parked low, top shelf) rather than plain grid. */
     private boolean dockRow;
+    /** Home tiles are the TV's inputs (config.xml home_inputs): rebuild them when an input comes or goes. */
+    private boolean homeInputs;
     /** Festive skin from the theme (see Festival); applied while it is active today. */
     private Festival festival = Festival.NONE;
     private boolean festive;
@@ -221,18 +223,49 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             handler.post(MainActivity.this::updateWifiLabel);
         }
     };
-    /** Shows the Inputs pill once the TV registers an input: at boot HDMI inputs can appear after Home is shown. */
+    /** Shows the Inputs pill once the TV registers an input: at boot HDMI inputs can appear after Home is shown.
+     *  With home_inputs the tiles follow too: a CEC device's input comes and goes with the device. */
     private final TvInputManager.TvInputCallback inputCallback = new TvInputManager.TvInputCallback() {
         @Override
         public void onInputAdded(String inputId) {
             updateInputsButton();
+            if (homeInputs) reloadInputTiles();
         }
 
         @Override
         public void onInputRemoved(String inputId) {
             updateInputsButton();
+            if (homeInputs) reloadInputTiles();
+        }
+
+        @Override
+        public void onTvInputInfoUpdated(TvInputInfo inputInfo) {
+            if (homeInputs) reloadInputTiles();
         }
     };
+
+    /**
+     * home_inputs: true from launch until the first key press. At boot the inputs register one by one after
+     * Home is up, so the first focus lands on the top bar with no tiles to take it (or Android's default-focus
+     * pass picks the Inputs pill), and focus follows the first input to register (HDMI 1) as the CEC devices
+     * sort in ahead of it. Until the owner presses a key, focus belongs on the first tile.
+     */
+    private boolean firstTilePending = true;
+
+    /** home_inputs: rebuild the tiles, keeping focus on the first one while nothing has been pressed yet. */
+    private void reloadInputTiles() {
+        reloadApps(false);
+        if (firstTilePending) focusFirstTile();
+    }
+
+    private void focusFirstTile() {
+        if (adapter.appCount() == 0) return;
+        lastFocused = 0;
+        lastFocusedKey = adapter.keyAt(0);
+        grid.post(() -> {
+            if (firstTilePending) focusTile(0);
+        });
+    }
     /** Listens for any VPN coming up or going down, even one this app's traffic is excluded from. */
     private final ConnectivityManager.NetworkCallback vpnCallback = new ConnectivityManager.NetworkCallback() {
         @Override
@@ -282,6 +315,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         advancedEffects = cfg.animations && cfg.advancedEffects;
         reducedMotion = cfg.reducedMotion;
         dockRow = cfg.dockRow;
+        homeInputs = cfg.homeInputs;
         festival = cfg.festival;
         festive = festival.active(LocalDate.now());
         liveTvPkg = cfg.liveTvPackage;
@@ -521,6 +555,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> {
             boolean onTile = newF != null && newF.getId() == R.id.card;
             if (!onTile) hideGlass();
+            if (!onTile && homeInputs && firstTilePending) focusFirstTile();
         });
 
         packageFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
@@ -769,6 +804,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      */
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) firstTilePending = false;
         if (handleSettingsKey(event)) return true;
         if (!reordering) return super.dispatchKeyEvent(event);
         if (dockEditing) return dispatchDockEdit(event);
@@ -1663,6 +1699,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         hideHero();
     }
 
+    @Override public void onInputSelected(String inputId) {
+        openInput(inputId);
+    }
+
     @Override public void onLibraryUp() {
         if (adapter.appCount() == 0) { btnWifi.requestFocus(); return; }
         int lastRow = ((adapter.appCount() - 1) / COLUMNS) * COLUMNS;
@@ -2082,21 +2122,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 if (ha != hb) return ha ? -1 : 1;
                 return String.valueOf(a.loadLabel(this)).compareToIgnoreCase(String.valueOf(b.loadLabel(this)));
             });
-            // An HDMI-CEC device (an Apple TV, a soundbar) gets an input of its own whose parent is the
-            // port it sits on, so the port and the device would each get a row (Vestel MT7332: "HDMI 1"
-            // and "HDMI Apple TV"). The device takes its port's row instead, and a bare port is listed
-            // only when nothing on it speaks CEC.
+            // An HDMI-CEC device (an Apple TV, a soundbar) gets an input of its own whose parent is the port it sits
+            // on (Vestel MT7332: "HDMI 1" and "HDMI Apple TV"). InputRows gives the device its port's row and lists
+            // a bare port only when nothing on it speaks CEC; the home_inputs tiles use the same rows.
             Set<String> inputIds = new HashSet<>();
             for (TvInputInfo info : inputs) inputIds.add(info.getId());
-            Map<String, List<TvInputInfo>> cecDevices = new HashMap<>();
-            for (TvInputInfo info : inputs) {
-                String parent = info.getParentId();
-                if (parent == null || !inputIds.contains(parent)) continue;
-                if (!info.isPassthroughInput() || info.isHidden(this)) continue;
-                List<TvInputInfo> onPort = cecDevices.get(parent);
-                if (onPort == null) cecDevices.put(parent, onPort = new ArrayList<>());
-                onPort.add(info);
-            }
             // Some TVs (Sony) report every HDMI port as connected whether or not anything is plugged in,
             // so drop the HDMI status then. A TV with every port really in use loses it too.
             int hdmiPorts = 0, hdmiConnected = 0;
@@ -2128,38 +2158,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         tunerIsAnalog = analog;
                     }
                 }
-                // Inputs hidden in the TV's Settings > Inputs stay out of the menu too.
-                if (!info.isPassthroughInput() || info.isHidden(this)) continue;
-                // A CEC device's row is added with its port, below.
-                if (info.getParentId() != null && inputIds.contains(info.getParentId())) continue;
-                CharSequence l = info.loadLabel(this);
-                String label = l == null ? info.getId() : l.toString();
-                boolean hdmi = info.getType() == TvInputInfo.TYPE_HDMI;
-                if (hdmi && !label.toUpperCase(Locale.ROOT).contains("HDMI")) label = "HDMI " + label;
-                CharSequence custom = info.loadCustomLabel(this);
-                boolean named = custom != null && custom.length() > 0 && !custom.toString().equals(label);
-                if (!hdmi && rows.getChildCount() > 0 && !sawNonHdmi) addSeparator(rows);
-                if (!hdmi) sawNonHdmi = true;
-                List<TvInputInfo> devices = cecDevices.get(info.getId());
-                if (devices != null) {
-                    // "Apple TV · HDMI 1": the device's own name (or the one given to it or to its port in
-                    // Settings > Inputs), then the port. Opening the device's input also makes it the CEC
-                    // active source, which wakes it.
-                    for (TvInputInfo device : devices) {
-                        CharSequence name = device.loadCustomLabel(this);
-                        if (name == null || name.length() == 0) name = named ? custom : device.loadLabel(this);
-                        String deviceLabel = name == null || name.length() == 0 ? label : name + " \u00B7 " + label;
-                        final String deviceId = device.getId();
-                        int state = hdmiStateBogus ? -1 : tim.getInputState(deviceId);
-                        addInputRow(rows, popup, R.drawable.ic_input, deviceLabel, state, () -> openInput(deviceId));
-                    }
-                    continue;
-                }
-                // The name given in Settings > Inputs (e.g. "MacBook Pro") goes first, the port after it.
-                if (named) label = custom + " \u00B7 " + label;
-                final String id = info.getId();
-                int state = hdmi && hdmiStateBogus ? -1 : tim.getInputState(id);
-                addInputRow(rows, popup, hdmi ? R.drawable.ic_input : R.drawable.ic_av, label, state,
+            }
+            for (InputRows.Row row : InputRows.build(InputRows.of(this, inputs), false)) {
+                if (!row.hdmi && rows.getChildCount() > 0 && !sawNonHdmi) addSeparator(rows);
+                if (!row.hdmi) sawNonHdmi = true;
+                // Opening a CEC device's input also makes it the CEC active source, which wakes it.
+                final String id = row.inputId;
+                int state = (row.hdmi || row.device) && hdmiStateBogus ? -1 : tim.getInputState(id);
+                addInputRow(rows, popup, row.hdmi ? R.drawable.ic_input : R.drawable.ic_av, row.text(), state,
                         () -> openInput(id));
             }
         }

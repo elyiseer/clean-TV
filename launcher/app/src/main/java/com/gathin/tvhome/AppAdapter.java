@@ -14,6 +14,7 @@ import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.media.tv.TvInputManager;
 import android.net.Uri;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -56,13 +57,18 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         void onLibraryRequested();
         void onLibraryFocused();
         void onLibraryUp();
+
+        /** An input tile was pressed (config home_inputs): switch to that TV input. */
+        void onInputSelected(String inputId);
     }
 
     static final class Entry {
-        static final int APP = 0, HOME_SETTINGS = 1, CARD = 2, EMPTY = 3;
+        static final int APP = 0, HOME_SETTINGS = 1, CARD = 2, EMPTY = 3, INPUT = 4;
 
         final int kind;
         final String label;
+        /** The TV input an INPUT tile switches to; null for every other kind. */
+        final String inputId;
         final ComponentName component;
         final String pkg;
         final Drawable banner;
@@ -77,7 +83,13 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
 
         Entry(int kind, String label, ComponentName component, Drawable banner, Drawable icon, String caption, int accent) {
+            this(kind, label, component, banner, icon, caption, accent, null);
+        }
+
+        Entry(int kind, String label, ComponentName component, Drawable banner, Drawable icon, String caption, int accent,
+              String inputId) {
             this.kind = kind;
+            this.inputId = inputId;
             this.label = label;
             this.component = component;
             this.pkg = component.getPackageName();
@@ -191,6 +203,12 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final boolean showHomeSettings;
     /** Calmer motion for weak GPUs (config.xml, reduced_motion): no overshoot, shorter fades. */
     private final boolean reducedMotion;
+    /** Tiles are the TV's inputs instead of apps (config.xml, home_inputs). */
+    private final boolean homeInputs;
+    /** Inputs never shown as tiles, by id or tile name (config.xml, hidden_inputs). */
+    private final List<String> hiddenInputs;
+    /** A port keeps its own tile next to its CEC devices (config.xml, home_inputs_ports). */
+    private final boolean homeInputsPorts;
     /** Package to the action its tile sends instead of the start screen (config.xml, launch_actions). */
     private final Map<String, String> launchActions;
     /** Tile names and bundled banners that replace the app's own (config.xml, app_labels and app_banners). */
@@ -212,6 +230,9 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.rowsBelowDock = cfg.rowsBelowDock;
         this.dockTitle = cfg.dockTitle;
         this.dockRow = cfg.dockRow;
+        this.homeInputs = cfg.homeInputs;
+        this.hiddenInputs = cfg.hiddenInputs;
+        this.homeInputsPorts = cfg.homeInputsPorts;
         this.cinematic = cfg.cinematicHome;
         this.launchActions = cfg.launchActions;
         this.appLabels = cfg.appLabels;
@@ -226,6 +247,15 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
      * so focus follows it); hidden_apps wins over a card, and a card's package in dock_apps takes that slot.
      */
     void reload(List<Cards.Card> cards) {
+        if (homeInputs) {
+            leanbackPackages = new HashSet<>();
+            docked = 0;
+            emptySlots = 0;
+            items.clear();
+            items.addAll(inputEntries());
+            notifyDataSetChanged();
+            return;
+        }
         PackageManager pm = ctx.getPackageManager();
         Intent probe = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
         List<ResolveInfo> found = new ArrayList<>(pm.queryIntentActivities(probe, 0));
@@ -302,6 +332,28 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         items.clear();
         items.addAll(fresh);
         notifyDataSetChanged();
+    }
+
+    /**
+     * config home_inputs: one tile per row of the Inputs menu (InputRows), with the HDMI-CEC devices first. A
+     * device's tile carries its own name with the port underneath; a port named in Settings > Inputs shows that
+     * name the same way.
+     */
+    private List<Entry> inputEntries() {
+        List<Entry> out = new ArrayList<>();
+        TvInputManager tim = (TvInputManager) ctx.getSystemService(Context.TV_INPUT_SERVICE);
+        if (tim == null) return out;
+        List<InputRows.Row> rows = InputRows.devicesFirst(InputRows.without(
+                InputRows.build(InputRows.of(ctx, tim.getTvInputList()), homeInputsPorts), hiddenInputs));
+        for (InputRows.Row row : rows) {
+            // The launcher's own white glyphs, not TvInputInfo.loadIcon(): Sony's are small photos on white.
+            Drawable icon = ctx.getDrawable(row.hdmi ? R.drawable.ic_input : R.drawable.ic_av);
+            // A CEC device reports its own name, so it goes through the same cleaner as app labels (#117).
+            out.add(new Entry(Entry.INPUT, Cards.cleanLabel(row.name, row.inputId),
+                    new ComponentName(ctx.getPackageName(), "input/" + row.inputId), null, icon, row.port, 0,
+                    row.inputId));
+        }
+        return out;
     }
 
     /** A banner_* drawable bundled with the launcher, or null for none or a name that is not one. */
@@ -419,6 +471,11 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             h.label.setVisibility(View.VISIBLE);
         }
         h.card.setOnClickListener(v -> launch(e));
+        if (e.kind == Entry.INPUT) {
+            // An input has no app behind it: the app-info screen would show this launcher.
+            h.card.setOnLongClickListener(null);
+            return;
+        }
         h.card.setOnLongClickListener(v -> {
             Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + e.pkg));
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -432,6 +489,10 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     /** Opens the tile's activity by explicit component, with no extras: a card can name nothing else. */
     private void launch(Entry e) {
+        if (e.kind == Entry.INPUT) {
+            listener.onInputSelected(e.inputId);
+            return;
+        }
         if (e.kind == Entry.HOME_SETTINGS) {
             ctx.startActivity(new Intent(ctx, HomeSettingsActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
