@@ -133,6 +133,7 @@ Notes for models that have no tested list yet live in [`docs/devices/`](../docs/
 
 - [TCL `75c63b`](../docs/devices/tcl-75c63b.md), owner-reported retail model, `Smart TV Pro` / `BeyondTV4`, Android 11, `V8-R51MT05-LF1V652`: launcher-only installation, HOME priorities and component restrictions, correct Live TV player package, restoration and explicit test limits.
 - [Xiaomi MiTV-MFTR0 "freeguy"](../docs/devices/xiaomi-mitv-mftr0-freeguy.txt), China, Android 14: inputs, Xiaomi settings intents, app discovery.
+- [Philips 65PUG7406/78](../docs/devices/philips-65pug7406-78.md), Brazil, Android TV 11, `TPM215L_R.105.000.097.000`: HOME handover notes and owner-selected Live TV/Assistant disables; no several-day debloat list.
 
 To add your TV, see [CONTRIBUTING.md](../CONTRIBUTING.md). The quickest way to get a list is to
 run the prompt in [PROMPT.md](../PROMPT.md) and copy the packages your assistant disabled.
