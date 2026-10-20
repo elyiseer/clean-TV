@@ -86,4 +86,12 @@
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
     </plurals>
+    <string name="overshoot_state">Bounce: %1$s</string>
+    <string name="move_tile">Move</string>
+    <string name="background_state">Background: %1$s</string>
+    <string name="background_theme">Theme</string>
+    <string name="background_black">Black</string>
+    <string name="background_sky">Time of day</string>
+    <string name="background_aurora">Aurora</string>
+    <string name="background_own">Own picture</string>
 </resources>

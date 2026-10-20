@@ -57,4 +57,12 @@
         <item quantity="one">%1$d App</item>
         <item quantity="other">%1$d Apps</item>
     </plurals>
+    <string name="overshoot_state">Nachfedern: %1$s</string>
+    <string name="move_tile">Verschieben</string>
+    <string name="background_state">Hintergrund: %1$s</string>
+    <string name="background_theme">Design</string>
+    <string name="background_black">Schwarz</string>
+    <string name="background_sky">Tageszeit</string>
+    <string name="background_aurora">Aurora</string>
+    <string name="background_own">Eigenes Bild</string>
 </resources>

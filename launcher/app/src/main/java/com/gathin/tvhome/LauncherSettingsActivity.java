@@ -11,16 +11,23 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Arrays;
+
 /** Remote-friendly settings owned by the launcher; system settings stay one row away. */
 public final class LauncherSettingsActivity extends Activity {
     private SharedPreferences choices;
     private final TextView[] columnChoices = new TextView[4];
     private TextView animationsChoice;
     private TextView advancedChoice;
+    private TextView overshootChoice;
+    private TextView backgroundChoice;
+    /** Background choices in the order OK cycles through them; "" follows the theme. */
+    private static final String[] BACKGROUNDS = {"", "black", "sky", "aurora", "own"};
     private TextView followThemeChoice;
     private int columns;
     private boolean animations;
     private boolean advancedEffects;
+    private boolean overshoot;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -31,6 +38,7 @@ public final class LauncherSettingsActivity extends Activity {
         columns = config.columns;
         animations = config.animations;
         advancedEffects = config.animations && config.advancedEffects;
+        overshoot = config.focusOvershoot;
 
         int[] ids = {R.id.columns4, R.id.columns5, R.id.columns6, R.id.columns7};
         for (int i = 0; i < ids.length; i++) {
@@ -73,14 +81,37 @@ public final class LauncherSettingsActivity extends Activity {
                         .show();
             }
         });
+        backgroundChoice = findViewById(R.id.backgroundChoice);
+        backgroundChoice.setOnClickListener(v -> {
+            String now = choices.getString(Config.BACKGROUND_KEY, "");
+            int i = Arrays.asList(BACKGROUNDS).indexOf(now);
+            String next;
+            do {
+                i = (i + 1) % BACKGROUNDS.length;
+                next = BACKGROUNDS[i];
+            } while (next.equals("own") && !Config.hasOwnBackground(this));   // only once the picture is there
+            if (next.isEmpty()) choices.edit().remove(Config.BACKGROUND_KEY).apply();
+            else choices.edit().putString(Config.BACKGROUND_KEY, next).apply();
+            setResult(RESULT_OK);
+            refresh();
+        });
+        overshootChoice = findViewById(R.id.overshootChoice);
+        overshootChoice.setOnClickListener(v -> {
+            overshoot = !overshoot;
+            choices.edit().putBoolean("focus_overshoot", overshoot).apply();
+            setResult(RESULT_OK);
+            refresh();
+        });
         followThemeChoice = findViewById(R.id.followThemeChoice);
         followThemeChoice.setOnClickListener(v -> {
             if (!hasOnTvChoices()) return;
-            choices.edit().remove("columns").remove("animations").remove("advanced_effects").commit();
+            choices.edit().remove("columns").remove("animations").remove("advanced_effects")
+                    .remove("focus_overshoot").remove(Config.BACKGROUND_KEY).commit();
             Config current = Config.load(this);
             columns = current.columns;
             animations = current.animations;
             advancedEffects = current.animations && current.advancedEffects;
+            overshoot = current.focusOvershoot;
             setResult(RESULT_OK);
             refresh();
         });
@@ -111,12 +142,22 @@ public final class LauncherSettingsActivity extends Activity {
                 getString(advancedEffects ? R.string.on : R.string.off)));
         advancedChoice.setEnabled(animations);
         advancedChoice.setAlpha(animations ? 1f : 0.5f);
+        String bg = choices.getString(Config.BACKGROUND_KEY, "");
+        int bgName = bg.equals("black") ? R.string.background_black : bg.equals("sky") ? R.string.background_sky
+                : bg.equals("aurora") ? R.string.background_aurora : bg.equals("own") ? R.string.background_own
+                : R.string.background_theme;
+        backgroundChoice.setText(getString(R.string.background_state, getString(bgName)));
+        overshootChoice.setText(getString(R.string.overshoot_state,
+                getString(overshoot ? R.string.on : R.string.off)));
+        overshootChoice.setEnabled(animations);
+        overshootChoice.setAlpha(animations ? 1f : 0.5f);
         followThemeChoice.setSelected(!hasOnTvChoices());
     }
 
     private boolean hasOnTvChoices() {
         return choices.contains("columns") || choices.contains("animations")
-                || choices.contains("advanced_effects");
+                || choices.contains("advanced_effects") || choices.contains("focus_overshoot")
+                || choices.contains(Config.BACKGROUND_KEY);
     }
 
     private void open(Intent intent) {

@@ -11,7 +11,9 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +33,10 @@ final class Config {
     private static final String TAG = "TvHome.Config";
     static final String FILE_NAME = "config.json";
     static final String WALLPAPER_NAME = "wallpaper.jpg";
+    /** The owner's own picture for the "Own picture" background, next to a theme's files. */
+    static final String OWN_BACKGROUND_NAME = "background.jpg";
+    /** Background chosen on the TV: black, sky, aurora or own; absent follows the theme. A theme push keeps it. */
+    static final String BACKGROUND_KEY = "background";
     static final String SETTINGS_NAME = "launcher_settings";
     private static final String THEME_REVISION_NAME = "theme_revision";
     private static final String THEME_SIGNATURE_KEY = "theme_signature";
@@ -72,6 +78,13 @@ final class Config {
     final int[] settingsKeycodes;
     /** The Settings button opens the quick settings panel instead of the TV's Settings (settings_key_panel). */
     final boolean settingsKeyPanel;
+    /** Stock launcher HomeKeyService steps in front of, on firmware that will not let it be disabled
+     *  (config.xml, home_redirect_package); empty for none. */
+    final String homeRedirectPackage;
+    /** Show the Wi-Fi/Ethernet pill in the top bar (config.xml, show_network_pill). */
+    final boolean showNetworkPill;
+    /** The glass highlight and the focused tile overshoot their target (config.xml, focus_overshoot). */
+    final boolean focusOvershoot;
     /** Full-screen picture behind the launcher, or null for the plain colour. */
     final File wallpaper;
     /** Whether the overlay file was present and parsed. */
@@ -85,7 +98,8 @@ final class Config {
                    boolean shamsiDate, boolean moduleCards, boolean reducedMotion, boolean dockTitle, boolean dockRow, boolean reorderButton, String vpnApp,
                    boolean showHomeSettingsShortcut, boolean showStats, boolean appLibrary, int backgroundColor, int skyIntensity,
                    int[] settingsKeycodes, boolean settingsKeyPanel, File wallpaper, boolean overlayApplied,
-                   Festival festival) {
+                   Festival festival, String homeRedirectPackage, boolean showNetworkPill,
+                   boolean focusOvershoot) {
         this.dockApps = Collections.unmodifiableList(dockApps);
         this.fillDock = fillDock;
         this.hiddenApps = Collections.unmodifiableList(hiddenApps);
@@ -115,6 +129,9 @@ final class Config {
         this.wallpaper = wallpaper;
         this.overlayApplied = overlayApplied;
         this.festival = festival;
+        this.homeRedirectPackage = homeRedirectPackage;
+        this.showNetworkPill = showNetworkPill;
+        this.focusOvershoot = focusOvershoot;
     }
 
     /** The folder the theme tools push into; null when external storage is unavailable. */
@@ -150,6 +167,9 @@ final class Config {
         int skyIntensity = res.getInteger(R.integer.sky_intensity);
         int[] settingsKeycodes = res.getIntArray(R.array.settings_key_keycodes);
         boolean settingsKeyPanel = res.getBoolean(R.bool.settings_key_panel);
+        String homeRedirect = res.getString(R.string.home_redirect_package).trim();
+        boolean networkPill = res.getBoolean(R.bool.show_network_pill);
+        boolean overshoot = res.getBoolean(R.bool.focus_overshoot);
         boolean applied = false;
 
         File dir = dir(ctx);
@@ -183,6 +203,9 @@ final class Config {
             skyIntensity = integer(json, "sky_intensity", skyIntensity, 0, 100);
             settingsKeycodes = intArray(json, "settings_key_keycodes", settingsKeycodes);
             settingsKeyPanel = bool(json, "settings_key_panel", settingsKeyPanel);
+            homeRedirect = string(json, "home_redirect_package", homeRedirect);
+            networkPill = bool(json, "show_network_pill", networkPill);
+            overshoot = bool(json, "focus_overshoot", overshoot);
         }
         // A theme push or reset invalidates choices made on the TV. On first use, remember the
         // current theme without clearing choices from an older launcher version.
@@ -192,10 +215,35 @@ final class Config {
         if (chosenColumns >= 4 && chosenColumns <= 7) columns = chosenColumns;
         animations = choices.getBoolean("animations", animations);
         advancedEffects = choices.getBoolean("advanced_effects", advancedEffects);
+        overshoot = choices.getBoolean("focus_overshoot", overshoot);
         File wallpaper = dir != null ? new File(dir, WALLPAPER_NAME) : null;
         if (wallpaper != null && !(wallpaper.isFile() && wallpaper.length() > 0)) wallpaper = null;
         // A theme can also switch the wallpaper off while the file is still there.
         if (json != null && json.has("wallpaper") && !bool(json, "wallpaper", true)) wallpaper = null;
+        // A background picked in Launcher settings wins over the theme's wallpaper, colour and sky.
+        switch (choices.getString(BACKGROUND_KEY, "")) {
+            case "black":
+                wallpaper = null;
+                skyIntensity = 0;
+                background = 0xFF000000;
+                break;
+            case "sky":
+                wallpaper = null;
+                skyIntensity = 60;
+                break;
+            case "aurora":
+                wallpaper = bundled(ctx, R.raw.aurora_wallpaper, "aurora_wallpaper.jpg");
+                skyIntensity = 0;
+                background = 0xFF070A14;
+                break;
+            case "own":
+                File own = dir != null ? new File(dir, OWN_BACKGROUND_NAME) : null;
+                wallpaper = own != null && own.isFile() && own.length() > 0 ? own : null;
+                skyIntensity = 0;
+                break;
+            default:
+                break;
+        }
         // A festive skin comes only from a theme; config.xml has no festival.
         Festival festival = json == null ? Festival.NONE : Festival.parse(string(json, "festival", ""),
                 string(json, "festival_until", ""), string(json, "greeting", ""), string(json, "accent_color", ""));
@@ -204,7 +252,29 @@ final class Config {
                 Math.max(1, columns), Math.max(0, rowsBelow), animations, advancedEffects,
                 shamsi, moduleCards, reducedMotion, dockTitle, dockRow, reorderButton, vpn, homeSettings, showStats, library, background,
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, wallpaper, applied,
-                festival);
+                festival, homeRedirect, networkPill, overshoot);
+    }
+
+    /** A picture shipped in the APK, copied once to app storage so it loads like a theme wallpaper. */
+    private static File bundled(Context ctx, int rawId, String name) {
+        File out = new File(ctx.getFilesDir(), name);
+        if (out.isFile() && out.length() > 0) return out;
+        try (InputStream in = ctx.getResources().openRawResource(rawId);
+             OutputStream os = new FileOutputStream(out)) {
+            byte[] buf = new byte[16 * 1024];
+            for (int n; (n = in.read(buf)) > 0; ) os.write(buf, 0, n);
+            return out;
+        } catch (Exception e) {
+            out.delete();
+            return null;
+        }
+    }
+
+    /** True when the owner's own background picture is on the TV. */
+    static boolean hasOwnBackground(Context ctx) {
+        File dir = dir(ctx);
+        File own = dir != null ? new File(dir, OWN_BACKGROUND_NAME) : null;
+        return own != null && own.isFile() && own.length() > 0;
     }
 
     private static void syncThemeChoices(SharedPreferences choices, File dir, File config) {
@@ -217,11 +287,11 @@ final class Config {
             // explicit theme push or reset by the updated tools.
             SharedPreferences.Editor editor = choices.edit();
             if (!"absent".equals(token)) editor.remove("columns").remove("animations")
-                    .remove("advanced_effects");
+                    .remove("advanced_effects").remove("focus_overshoot");
             editor.putString(THEME_SIGNATURE_KEY, signature).commit();
         } else if (!seen.equals(signature)) {
             choices.edit().remove("columns").remove("animations").remove("advanced_effects")
-                    .putString(THEME_SIGNATURE_KEY, signature).commit();
+                    .remove("focus_overshoot").putString(THEME_SIGNATURE_KEY, signature).commit();
         }
     }
 

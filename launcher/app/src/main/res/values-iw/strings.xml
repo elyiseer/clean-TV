@@ -85,4 +85,12 @@
         <item quantity="two">שתי אפליקציות</item>
         <item quantity="other">%1$d אפליקציות</item>
     </plurals>
+    <string name="overshoot_state">קפיציות: %1$s</string>
+    <string name="move_tile">העברה</string>
+    <string name="background_state">רקע: %1$s</string>
+    <string name="background_theme">ערכת נושא</string>
+    <string name="background_black">שחור</string>
+    <string name="background_sky">שעת היום</string>
+    <string name="background_aurora">זוהר צפוני</string>
+    <string name="background_own">תמונה משלי</string>
 </resources>
