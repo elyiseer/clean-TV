@@ -19,6 +19,7 @@ import java.util.Map;
  *   settings put secure accessibility_enabled 1
  */
 public class HomeKeyService extends AccessibilityService {
+    private TvButtonController tvButton;
 
     /** Remote buttons that should open Settings (config.xml, settings_key_scancodes and settings_key_keycodes). */
     private int[] settingsScancodes = new int[0];
@@ -30,6 +31,8 @@ public class HomeKeyService extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
+        if (tvButton != null) tvButton.close();
+        tvButton = new TvButtonController(this, false);
         settingsScancodes = getResources().getIntArray(R.array.settings_key_scancodes);
         // Keycodes and the panel choice can also come from a theme; theme.sh restarts this service.
         Config config = Config.load(this);
@@ -47,6 +50,7 @@ public class HomeKeyService extends AccessibilityService {
 
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
+        if (tvButton != null && tvButton.hasOverride() && tvButton.onKeyEvent(event)) return true;
         // The stock launcher handled the remote's Settings button; with it disabled the button does nothing.
         if (isSettingsKey(event)) {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
@@ -56,6 +60,7 @@ public class HomeKeyService extends AccessibilityService {
             }
             return true;
         }
+        if (tvButton != null && tvButton.onKeyEvent(event)) return true;
         String app = appKeys.get(event.getKeyCode());
         if (app != null) {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) RemoteKeys.launch(this, app);
@@ -74,6 +79,11 @@ public class HomeKeyService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+    }
+
+    @Override public void onDestroy() {
+        if (tvButton != null) tvButton.close();
+        super.onDestroy();
     }
 
     @Override

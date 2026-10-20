@@ -96,6 +96,12 @@
     </plurals>
     <!-- The greeting, then greeting_name: "Good morning, Mr. Trịnh". -->
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="tv_button">TV button</string>
+    <string name="tv_button_follow">Follow configuration</string>
+    <string name="tv_button_inputs">Input switcher</string>
+    <string name="tv_button_unavailable">TV button destination unavailable. Choose another app in Launcher settings.</string>
+    <string name="tv_button_helper_enabled">Remote helper enabled — open accessibility settings</string>
+    <string name="tv_button_helper_needed">Enable Input button or Home button in accessibility settings</string>
 
     <!-- Race-weekend panel (RaceWeekend). Session names come from the calendar. -->
     <string name="race_kicker">Round %1$d · %2$s · %3$s</string>

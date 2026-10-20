@@ -17,6 +17,7 @@ import java.util.Map;
  * Opt-in: INPUT_KEY_SERVICE=1 build-and-install.sh (or -InputKeyService on Windows) enables it.
  */
 public class InputKeyService extends AccessibilityService {
+    private TvButtonController tvButton;
 
     private static final String ACTION_VIEW_INPUTS = "com.android.tv.action.VIEW_INPUTS";
 
@@ -26,6 +27,8 @@ public class InputKeyService extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
+        if (tvButton != null) tvButton.close();
+        tvButton = new TvButtonController(this, true);
         // From config.xml or a theme's config.json; theme.sh rebinds this service after a push.
         Config config = Config.load(this);
         inputKeycodes = config.inputKeycodes;
@@ -40,6 +43,7 @@ public class InputKeyService extends AccessibilityService {
 
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
+        if (tvButton != null && tvButton.onKeyEvent(event)) return true;
         String app = appKeys.get(event.getKeyCode());
         if (app == null && !isInputKey(event.getKeyCode())) return false;
         if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
@@ -57,6 +61,11 @@ public class InputKeyService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+    }
+
+    @Override public void onDestroy() {
+        if (tvButton != null) tvButton.close();
+        super.onDestroy();
     }
 
     @Override

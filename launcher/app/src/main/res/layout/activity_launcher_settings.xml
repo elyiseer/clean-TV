@@ -112,6 +112,11 @@
             android:textColor="#FFACB8C1"
             android:textSize="14sp" />
 
+        <TextView android:id="@+id/tvButtonChoice" style="@style/SettingsRow"
+            android:layout_marginTop="18dp" android:text="@string/tv_button" />
+        <TextView android:id="@+id/tvButtonHelper" style="@style/SettingsRow"
+            android:layout_marginTop="10dp" />
+
         <TextView
             android:id="@+id/tvSettingsChoice"
             style="@style/SettingsRow"

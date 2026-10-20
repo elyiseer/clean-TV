@@ -112,8 +112,14 @@ public final class LauncherSettingsActivity extends Activity {
         });
         findViewById(R.id.tvSettingsChoice).setOnClickListener(v ->
                 open(new Intent(Settings.ACTION_SETTINGS)));
+        findViewById(R.id.tvButtonChoice).setOnClickListener(v -> TvButtonSettings.show(this));
         refresh();
         columnChoices[Math.max(0, Math.min(columns - 4, 3))].requestFocus();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        TvButtonSettings.refreshStatus(this, findViewById(R.id.tvButtonHelper));
     }
 
     private void reverseRow(TextView[] views) {
