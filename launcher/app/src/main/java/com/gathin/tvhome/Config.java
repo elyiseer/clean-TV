@@ -44,6 +44,8 @@ final class Config {
     final String sourcePanelService;
     final String sourcePanelAction;
     final String inputAction;
+    /** Per-input action+extra overrides (config.xml, input_action_map); empty when unused. */
+    final List<String> inputActionMap;
     final int columns;
     final boolean animations;
     final boolean advancedEffects;
@@ -93,7 +95,7 @@ final class Config {
 
     private Config(List<String> dockApps, boolean fillDock, List<String> hiddenApps, String liveTvPackage,
                    String liveTvAction, String sourcePanelService, String sourcePanelAction, String inputAction,
-                   int columns, int rowsBelowDock, boolean animations, boolean advancedEffects,
+                   List<String> inputActionMap, int columns, int rowsBelowDock, boolean animations, boolean advancedEffects,
                    boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean dockTitle, boolean dockRow, boolean reorderButton, String vpnApp,
                    boolean showHomeSettingsShortcut, boolean showStats, boolean appLibrary, int backgroundColor, int skyIntensity,
                    int[] settingsKeycodes, boolean settingsKeyPanel, boolean wallpaperEnabled, File wallpaper, List<File> wallpapers,
@@ -109,6 +111,7 @@ final class Config {
         this.sourcePanelService = sourcePanelService;
         this.sourcePanelAction = sourcePanelAction;
         this.inputAction = inputAction;
+        this.inputActionMap = Collections.unmodifiableList(inputActionMap);
         this.columns = columns;
         this.rowsBelowDock = rowsBelowDock;
         this.animations = animations;
@@ -152,6 +155,7 @@ final class Config {
         String panelService = res.getString(R.string.source_panel_service).trim();
         String panelAction = res.getString(R.string.source_panel_action).trim();
         String inputAction = res.getString(R.string.input_action).trim();
+        List<String> inputMap = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.input_action_map)));
         int columns = res.getInteger(R.integer.columns);
         int rowsBelow = res.getInteger(R.integer.rows_below_dock);
         boolean animations = res.getBoolean(R.bool.animations);
@@ -188,6 +192,7 @@ final class Config {
             panelService = string(json, "source_panel_service", panelService);
             panelAction = string(json, "source_panel_action", panelAction);
             inputAction = string(json, "input_action", inputAction);
+            inputMap = stringList(json, "input_action_map", inputMap);
             columns = integer(json, "columns", columns, 1, 8);
             rowsBelow = integer(json, "rows_below_dock", rowsBelow, 0, 3);
             animations = bool(json, "animations", animations);
@@ -235,7 +240,7 @@ final class Config {
                 string(json, "festival_until", ""), string(json, "greeting", ""), string(json, "accent_color", ""));
 
         return new Config(dock, fillDock, hidden, liveTv, liveTvAction, panelService, panelAction, inputAction,
-                Math.max(1, columns), Math.max(0, rowsBelow), animations, advancedEffects,
+                inputMap, Math.max(1, columns), Math.max(0, rowsBelow), animations, advancedEffects,
                 shamsi, greetingName, moduleCards, reducedMotion, dockTitle, dockRow, reorderButton, vpn, homeSettings, showStats, library, background,
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, wallpaperEnabled, wallpaper,
                 wallpapers, rotationMinutes, wallpaperDim, applied,

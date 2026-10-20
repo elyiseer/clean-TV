@@ -93,6 +93,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private String liveTvPkg;
     private String liveTvAction;
     private String inputAction;
+    private List<String> inputActionMap = Collections.emptyList();
     private String sourcePanelService;
     private String sourcePanelAction;
 
@@ -260,6 +261,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         liveTvPkg = cfg.liveTvPackage;
         liveTvAction = cfg.liveTvAction;
         inputAction = cfg.inputAction;
+        inputActionMap = cfg.inputActionMap;
         sourcePanelService = cfg.sourcePanelService;
         sourcePanelAction = cfg.sourcePanelAction;
 
@@ -1745,8 +1747,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /** Switches to a passthrough input (HDMI, AV). The standard way is ACTION_VIEW on its channel URI,
-     *  which the Live TV app handles; where nothing takes that, the configured `input_action` is sent
-     *  with the same URI instead (XGIMI's HDMI player only answers com.xgimi.action.hdmiPlayer). */
+     *  which the Live TV app handles; where nothing takes that, input_action_map is tried first (a
+     *  per-input action and integer extra), then the configured `input_action` with the same URI
+     *  (XGIMI's HDMI player only answers com.xgimi.action.hdmiPlayer). */
     private void openInput(String inputId) {
         Uri uri = TvContract.buildChannelUriForPassthroughInput(inputId);
         Intent view = new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "vnd.android.cursor.item/channel")
@@ -1755,12 +1758,44 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             startActivity(view);
             return;
         } catch (ActivityNotFoundException e) {
+            if (openMappedInput(inputId)) return;
             if (inputAction.isEmpty()) {
                 Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
                 return;
             }
         }
         open(new Intent(inputAction).setDataAndType(uri, "vnd.android.cursor.item/channel"));
+    }
+
+    /** Switches a passthrough input on TVs that answer neither the channel URI nor input_action:
+     *  config.xml's input_action_map lists "input id substring|action|component|extra|integer",
+     *  e.g. Xiaomi China firmware switches HDMI with EXTSRC_PLAY and an "input" extra. True when one
+     *  entry matched and its activity started. */
+    private boolean openMappedInput(String inputId) {
+        for (String entry : inputActionMap) {
+            String[] f = entry.split("\\|");
+            if (f.length != 5 || !inputId.contains(f[0].trim())) continue;
+            Intent i = new Intent(f[1].trim());
+            String component = f[2].trim();
+            if (!component.isEmpty()) {
+                ComponentName cn = ComponentName.unflattenFromString(component);
+                if (cn == null) continue;
+                i.setComponent(cn);
+            }
+            try {
+                i.putExtra(f[3].trim(), Integer.parseInt(f[4].trim()));
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                startActivity(i);
+                return true;
+            } catch (ActivityNotFoundException ignored) {
+                // try the next entry
+            }
+        }
+        return false;
     }
 
     /** Dropdown menu under the Inputs pill: HDMI ports (with connection state), AV and Live TV. */

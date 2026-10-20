@@ -44,6 +44,20 @@
          (XGIMI projectors: com.xgimi.action.hdmiPlayer). Leave empty to omit. -->
     <string name="input_action" translatable="false"></string>
 
+    <!-- Some TVs answer neither ACTION_VIEW nor `input_action` for a port and switch inputs with an
+         explicit action plus an integer extra instead. Each entry is
+         "input-id substring|action|component|extra name|extra value", matched in order against the
+         input's TvInputInfo id; an empty component leaves the intent implicit. Tried before
+         `input_action`. Xiaomi China firmware (com.droidlogic.tvinput registers Hdmi1InputService,
+         Hdmi2InputService, Hdmi3InputService and AV1InputService, and nothing answers the standard
+         channel URI) needs the four entries below. Leave the list empty on TVs that answer the URI. -->
+    <string-array name="input_action_map" translatable="false">
+        <item>Hdmi1InputService|com.xiaomi.mitv.tvplayer.EXTSRC_PLAY|com.xiaomi.mitv.tvplayer/.ExternalSourceActivity|input|23</item>
+        <item>Hdmi2InputService|com.xiaomi.mitv.tvplayer.EXTSRC_PLAY|com.xiaomi.mitv.tvplayer/.ExternalSourceActivity|input|24</item>
+        <item>Hdmi3InputService|com.xiaomi.mitv.tvplayer.EXTSRC_PLAY|com.xiaomi.mitv.tvplayer/.ExternalSourceActivity|input|25</item>
+        <item>AV1InputService|com.xiaomi.mitv.tvplayer.EXTSRC_PLAY|com.xiaomi.mitv.tvplayer/.ExternalSourceActivity|input|2</item>
+    </string-array>
+
     <!-- Remote buttons that open Settings, by Linux scancode (HOME_KEY_SERVICE=1 build-and-install.sh). Remotes
          that send KEYCODE_SETTINGS need no entry. Some send a code Android does not map: the Xiaomi/Fengmi
          projector remote's gear button is scancode 384 (KEY_TAPE). Find yours with
