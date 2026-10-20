@@ -1,0 +1,13 @@
+# Telemetria, Coleta de Dados e Feedback
+com.android.tv.feedbackconsent
+com.android.ondevicepersonalization.services
+
+# Loja alternativa e Aplicativos pré-instalados/Demos
+cm.aptoide.pt
+fusion.android.tv.demo
+com.vscine.tv
+
+# Opcionais (Desative apenas se NÃO usar os apps abaixo)
+# com.google.android.youtube.tvmusic
+com.viki.android
+com.wbd.stream
