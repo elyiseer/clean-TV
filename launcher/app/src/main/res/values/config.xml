@@ -28,6 +28,11 @@
     <!-- The TV's Live TV / tuner app, offered at the end of the Inputs menu. Leave empty to omit. -->
     <string name="live_tv_package" translatable="false">com.mediatek.wwtv.tvcenter</string>
 
+    <!-- Open the Live TV app above the first time Home comes up after the TV is switched on, for sets that are
+         mostly used for broadcast TV. Once per boot: Home after that stays Home. Can also be set with
+         "boot_to_live_tv": true in a theme's config.json. -->
+    <bool name="boot_to_live_tv">false</bool>
+
     <!-- Some TVs give their Live TV app no leanback entry point at all, so `live_tv_package` above
          resolves to nothing (TCL Android TV 9 on China-market sets is one). This action is then sent
          to that package instead, and the app starts normally. Leave empty to omit. -->
