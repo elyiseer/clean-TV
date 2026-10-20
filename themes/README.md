@@ -12,12 +12,15 @@ TV_HOST=192.168.1.50 tools/theme.sh --reset                # back to the built-i
 powershell -ExecutionPolicy Bypass -File tools\theme.ps1 -TvHost 192.168.1.50 themes\aurora
 ```
 
-| Theme | What it does |
-|---|---|
-| `default/` | The built-in look written out as JSON, as a starting point for your own |
-| `aurora/` | A dark aurora wallpaper (teal and violet on navy, darker at the bottom) with a matching background colour |
-| `dussehra/` | Festive skin for Dussehra (ends 21 Oct 2026): a marigold toran, a faint gold rangoli, a diya for Wi-Fi, a bell for Inputs, a marigold for Settings and a petal shower |
-| `six-columns/` | Six smaller tiles per row and one grid row visible under the dock |
+| Theme | What it does | Screenshot |
+|---|---|---|
+| `default/` | The built-in look written out as JSON, as a starting point for your own | <img src="default/screenshot.jpg" width="320" alt="default theme"> |
+| `aurora/` | A dark aurora wallpaper (teal and violet on navy, darker at the bottom) with a matching background colour | <img src="aurora/screenshot.jpg" width="320" alt="aurora theme"> |
+| `dussehra/` | Festive skin for Dussehra (ends 21 Oct 2026): a marigold toran, a faint gold rangoli, a diya for Wi-Fi, a bell for Inputs, a marigold for Settings and a petal shower | <img src="dussehra/screenshot.jpg" width="320" alt="dussehra theme"> |
+| `six-columns/` | Six smaller tiles per row and one grid row visible under the dock | <img src="six-columns/screenshot.jpg" width="320" alt="six-columns theme"> |
+
+Every theme folder has a `screenshot.jpg` of Home with that theme on a real TV. `tools/theme.sh` never
+pushes it; it is only here so you can see a theme before you try it.
 
 ## Keys
 
@@ -122,6 +125,16 @@ the plain background; the default is off (the reference launcher looks exactly a
 
 ## Adding a theme
 
-Open a PR with a new folder here, a one-line row in the table above and a screenshot from a real TV
-in the PR description. Keep the dock list generic (the big streaming apps) unless the theme is for a
-specific TV, and say which TV you tried it on.
+Open a PR with a new folder here containing:
+
+- `config.json`, the theme itself.
+- `screenshot.jpg`, **required**: Home on a real TV with the theme pushed, not a mock-up or an
+  emulator. Take it with `tools/tv.py 'screencap -p /sdcard/s.png'` and
+  `tools/tv.py --pull /sdcard/s.png s.png`, then save it as a JPEG at 1280×720 (16:9) under 300 KB,
+  for example `sips -z 720 1280 -s format jpeg s.png --out screenshot.jpg` on macOS. Leave the focus on
+  the dock so the glow and the hero name show. A PR without it fails CI (`tests/test_themes.py`).
+- `wallpaper.jpg` or `wallpapers/` if the theme uses them.
+
+Then add a row to the table above with the screenshot, the same way as the others. Keep the dock list
+generic (the big streaming apps) unless the theme is for a specific TV, and say which TV you tried it on
+in the PR description.
