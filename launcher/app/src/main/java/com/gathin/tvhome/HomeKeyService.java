@@ -2,6 +2,8 @@ package com.gathin.tvhome;
 
 import android.accessibilityservice.AccessibilityService;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
@@ -13,6 +15,9 @@ import java.util.Map;
  * Sends the remote's Home button to this launcher on remotes that emit KEYCODE_ALL_APPS for Home
  * (Xiaomi sticks and boxes). Android TV 9 routes that key only to the system-image launcher, so once
  * the stock launcher is disabled the button does nothing. Every other key passes through untouched.
+ *
+ * Fire OS: Amazon's launcher keeps Home, and its key events cannot be intercepted here. So this service
+ * watches for Amazon's home window (window-state events) and brings this launcher to the front over it.
  *
  * Enable over adb:
  *   settings put secure enabled_accessibility_services com.gathin.tvhome/.HomeKeyService
@@ -72,8 +77,34 @@ public class HomeKeyService extends AccessibilityService {
         return true;
     }
 
+    /** Fire OS: Amazon's home screen (its ads and sponsored rows included) comes up whenever Home is pressed. */
+    private static final String FIRE_HOME_PACKAGE = "com.amazon.tv.launcher";
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+        if (event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
+        CharSequence pkg = event.getPackageName();
+        CharSequence cls = event.getClassName();
+        if (pkg == null || cls == null || !FIRE_HOME_PACKAGE.equals(pkg.toString())) return;
+        if (!cls.toString().contains("HomeActivity")) return;
+        if (isHomeOwnedByThisApp()) return;
+        android.util.Log.i("HomeKeyService", "amazon home shown: " + cls);
+        openThisLauncher();
+    }
+
+    /** True when Android's own HOME resolution already lands on this launcher (Google TV, Xiaomi). */
+    private boolean isHomeOwnedByThisApp() {
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo info = getPackageManager().resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY);
+        return info != null && info.activityInfo != null && getPackageName().equals(info.activityInfo.packageName);
+    }
+
+    private void openThisLauncher() {
+        Intent home = new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME)
+                .setPackage(getPackageName())
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        startActivity(home);
     }
 
     @Override

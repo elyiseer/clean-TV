@@ -26,6 +26,17 @@ if [ -z "${STOCK_LAUNCHER:-}" ]; then
     | tail -n 1 | tr -d '\r' | cut -d/ -f1) || {
     echo "ERROR: could not ask the TV which launcher owns Home. Check TV_HOST and the debugging prompt on the TV," >&2
     echo "or pass STOCK_LAUNCHER=<package> yourself." >&2; exit 1; }
+  # Fire OS: Amazon's launcher holds Home at priority 950 and protects its packages, so this launcher cannot
+  # become Home. Fire mode leaves Amazon's launcher enabled and runs the new one over its home screen instead:
+  # HomeKeyService brings this launcher to the front whenever Amazon's home window appears (see README).
+  FIRE_OS=0
+  case "$HOME_PKG" in
+    com.amazon.tv.launcher|com.amazon.firehomestarter)
+      FIRE_OS=1; STOCK_LAUNCHER=none
+      echo "Fire OS: Home belongs to Amazon's launcher ($HOME_PKG). Installing in Fire mode: Amazon's launcher"
+      echo "stays enabled, and HomeKeyService puts this launcher in front of it." ;;
+  esac
+  if [ "$FIRE_OS" = 0 ]; then
   case " $KNOWN_STOCK_LAUNCHERS " in
     *" $HOME_PKG "*) STOCK_LAUNCHER=$HOME_PKG ;;
     *)
@@ -55,6 +66,7 @@ if [ -z "${STOCK_LAUNCHER:-}" ]; then
         echo "Run again with STOCK_LAUNCHER=<package to disable> or STOCK_LAUNCHER=none." >&2; exit 1
       fi ;;
   esac
+  fi
 fi
 echo "Stock launcher: $STOCK_LAUNCHER"
 HOME_QUERY='cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME'
@@ -131,6 +143,9 @@ rollback_home() {
 HOME_NOW=$(query_home)
 case "$HOME_NOW" in
   com.gathin.tvhome/*) echo "Home now resolves to $HOME_NOW" ;;
+  com.amazon.tv.launcher/*|com.amazon.firehomestarter/*)
+    if [ "$FIRE_OS" = 1 ]; then echo "Fire mode: Home stays with $HOME_NOW; the launcher comes up over it."
+    else echo "ERROR: Home resolves to $HOME_NOW, not to the new launcher." >&2; rollback_home || true; exit 1; fi ;;
   *)
     if [ -z "$HOME_NOW" ]; then
       echo "ERROR: the TV stopped answering while Home was being switched, so the outcome is unknown." >&2
@@ -158,4 +173,9 @@ enable_service() {   # appends to enabled_accessibility_services without droppin
 }
 if [ "${INPUT_KEY_SERVICE:-0}" = 1 ]; then enable_service InputKeyService; fi
 if [ "${HOME_KEY_SERVICE:-0}" = 1 ]; then enable_service HomeKeyService; fi
+if [ "$FIRE_OS" = 1 ]; then
+  # Fire mode: the watcher is required, and the clock replaces Amazon's screensaver, which shows promotions.
+  enable_service HomeKeyService
+  "$PY" -I ../tools/tv.py 'settings put secure screensaver_components com.gathin.tvhome/com.gathin.tvhome.ClockDream; echo clock screensaver set'
+fi
 echo "Installed. Press Home on the remote to see it."

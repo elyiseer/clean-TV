@@ -78,8 +78,11 @@ phoning home, no apps you never asked for.
 ## Supported TVs
 
 Anything running **Android TV** or **Google TV**. Samsung (Tizen) and LG (webOS) run different
-systems; see [SHOWCASE.md](SHOWCASE.md) for a webOS port. **Fire TV** takes the debloat half only,
-since Fire OS will not hand Home to a third-party launcher. A few China-market TCL sets refuse to
+systems; see [SHOWCASE.md](SHOWCASE.md) for a webOS port. **Fire TV** cannot give this launcher the Home
+role: Fire OS keeps Home for Amazon's launcher and refuses to disable it. Instead, the launcher comes up over
+Amazon's home screen each time it appears (Fire mode in `build-and-install.sh`), and the debloat list in
+[`examples/amazon-fire-tv-aftdec012e/`](examples/amazon-fire-tv-aftdec012e/) removes the telemetry and preloads.
+Details and what was tested: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#fire-tv-fire-os-debloat-works-the-launcher-cannot-take-home). A few China-market TCL sets refuse to
 install any launcher at all; their lists say so in the header.
 
 Tested lists from contributors, one folder per model in [`examples/`](examples/):
@@ -98,6 +101,7 @@ BYINTEK, JMGO, Portronics, Stellamore, Wanbo and XGIMI projectors
 |---|---|
 | AiPro2K (Expressluck, dongnae; Changhong AI PONT family) | Android TV 14 |
 | AIWA AI PONT SA (Changhong, osaka, ISDB86AW) | Google TV 14 |
+| Amazon Fire TV, AFTDEC012E (ginza), Android 11 | Fire OS / Android 11 |
 | Amazon Fire TV 50" 4K smart TV (AFTTIFF43, brandenburg) | Fire OS 7.7.1.7 / Android 9 |
 | Amazon Fire TV Stick 4K, 1st gen 2018 (AFTMM, mantis) | Fire OS 6.7.1.1 / Android 7.1 |
 | Amazon Fire TV Stick Lite, 1st gen 2020 (AFTSS, sheldon) | Fire OS 7.7.1.7 / Android 9 |

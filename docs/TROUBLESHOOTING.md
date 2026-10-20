@@ -192,3 +192,35 @@ TV 12) the line is `[TclAppBoot] ... calleeComponent = 'com.gathin.tvhome/.HomeK
 (`appops set com.gathin.tvhome APP_AUTO_START allow`) made the service bind on its own after a restart;
 toggling the service off and on in Accessibility works until the next restart. When reporting, give the
 model, build, current user and the relevant redacted lines, not the raw dump.
+
+## Fire TV (Fire OS): debloat works, the launcher cannot take Home
+
+Why Google TV differs: on Google TV a third-party app can take the HOME role, so the launcher, the
+`set-home-activity` default and the stock-launcher disable all work. Fire OS keeps Home for Amazon's own
+launcher, and the same tools fail there. Checked on an Amazon Fire TV, model AFTDEC012E (codename ginza),
+Android 11 (SDK 30), build RS8185.3885N:
+
+- `cmd package query-activities` for HOME: `com.amazon.tv.launcher/.ui.HomeActivity_vNext` at priority 950,
+  `com.amazon.firehomestarter` at 1. A third-party launcher installed with `android:priority="1000"` on its
+  HOME filter still sits at 0. Fire OS ignores the priority of a non-system app.
+- `cmd package set-home-activity com.gathin.tvhome/.MainActivity` prints `Success`, and HOME still resolves
+  to Amazon's launcher.
+- `pm disable-user --user 0` on `com.amazon.tv.launcher`, on its component `HomeActivity_vNext`, and on the
+  other Fire OS home packages is refused: `Cannot disable a protected package`.
+- Intercepting the Home key with an AccessibilityService did not work: `onKeyEvent` received nothing for
+  injected keys (`input keyevent KEYCODE_HOME`) or for a 40-second window of remote presses.
+
+What works instead is a watcher. `HomeKeyService` also listens for window changes (`TYPE_WINDOW_STATE_CHANGED`),
+and those do reach it on Fire OS. When Amazon's home window (`com.amazon.tv.launcher`, `HomeActivity`) comes
+up, the service starts this launcher, which then sits on top. Amazon's home is not disabled: it still runs
+underneath, and a brief flash of it is visible before the launcher appears. Opening an app, or Back from the
+launcher, does not loop. Checked on the same TV, including after a reboot.
+
+`launcher/build-and-install.sh` detects Amazon's home and installs in Fire mode: Amazon's launcher stays on,
+`HomeKeyService` is enabled, and the clock screensaver (`ClockDream`) replaces Amazon's screensaver. Undo:
+`settings put secure screensaver_components <the previous value>` (it was `com.amazon.ftv.screensaver/.app.services.ScreensaverService`),
+`settings delete secure enabled_accessibility_services`, and
+`pm uninstall com.gathin.tvhome`. The Windows script (`build-and-install.ps1`) does not have Fire mode yet.
+
+Debloat: `tools/disable.sh examples/amazon-fire-tv-aftdec012e/debloat.txt` disables telemetry, ACR, shopping and
+tutorial packages. Undo with `tools/restore.sh examples/amazon-fire-tv-aftdec012e/debloat.txt com.amazon.tv.launcher`.
