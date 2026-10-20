@@ -155,6 +155,7 @@ BYINTEK, JMGO, Portronics, Stellamore, Wanbo and XGIMI projectors
 | NVIDIA SHIELD TV 2019 tube (P3430, sif) | Android TV 11 |
 | NVIDIA SHIELD TV Pro 2019 (P2897, mdarcy) | Android TV 11 |
 | OnePlus TV (D00, Dubai) | Google TV 14 |
+| OnePlus Y1 43" (Y Series, shibuya) | Android TV 11 |
 | onn 4K Streaming Box (2023, Walmart; YOC, Amlogic), US | Google TV 14 |
 | Panasonic 4KTV-0SU (Skyworth-built SW4H, MediaTek m7332), Gulf region | Android TV 10 |
 | Panasonic 4KTV-JUP (Jupiter_PA, MediaTek) | Android TV 11 |
