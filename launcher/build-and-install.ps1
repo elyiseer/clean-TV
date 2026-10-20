@@ -6,11 +6,13 @@
 #        The stock launcher is detected from the TV when -StockLauncher is not given.
 #        [-InputKeyService]   remote's Input button opens the input switcher (Google TV); re-pass on every install
 #        [-HomeKeyService]    remotes whose Home button sends KEYCODE_ALL_APPS (Xiaomi sticks)
+#        [-ScreenTime]        usage access for the Screen time report (screen_time)
 param(
     [string]$TvHost = $env:TV_HOST,
     [string]$StockLauncher = '',
     [switch]$InputKeyService,
-    [switch]$HomeKeyService
+    [switch]$HomeKeyService,
+    [switch]$ScreenTime
 )
 $ErrorActionPreference = 'Stop'
 # Pipe plain UTF-8 to native commands; the default here prepends a BOM that corrupts the first command.
@@ -99,4 +101,6 @@ function Enable-Service([string]$Name) {
 }
 if ($InputKeyService) { Enable-Service 'InputKeyService' }
 if ($HomeKeyService) { Enable-Service 'HomeKeyService' }
+# Optional usage access for the Screen time report: which apps were in front and when, read on the TV only.
+if ($ScreenTime) { & $py -I ..\tools\tv.py 'appops set com.gathin.tvhome GET_USAGE_STATS allow && echo usage-access-granted' }
 Write-Host 'Installed. Press Home on the remote to see it.'

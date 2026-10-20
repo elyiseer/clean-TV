@@ -33,4 +33,13 @@
     <string name="on">เปิด</string>
     <string name="off">ปิด</string>
     <string name="enable">เปิดใช้งาน</string>
+    <string name="report">รายงาน</string>
+    <string name="report_title">เวลาอยู่หน้าจอ</string>
+    <string name="report_24h">24 ชั่วโมง</string>
+    <string name="report_7d">7 วัน</string>
+    <string name="report_sub_24h">เปิดทีวีในช่วง 24 ชั่วโมงที่ผ่านมา</string>
+    <string name="report_sub_7d">เปิดทีวีในช่วง 7 วันที่ผ่านมา</string>
+    <string name="report_app_24h">%1$s ในช่วง 24 ชั่วโมงที่ผ่านมา</string>
+    <string name="report_app_7d">%1$s ในช่วง 7 วันที่ผ่านมา</string>
+    <string name="report_no_access">ต้องมีสิทธิ์เข้าถึงการใช้งาน: เรียก build-and-install.sh พร้อม SCREEN_TIME=1 หรือ adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>

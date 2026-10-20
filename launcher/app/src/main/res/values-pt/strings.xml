@@ -46,4 +46,13 @@
     <string name="card_state_new">Novo</string>
     <string name="card_state_new_key">Nova chave</string>
     <string name="card_state_new_label">Novo nome</string>
+    <string name="report">Relatório</string>
+    <string name="report_title">Tempo de ecrã</string>
+    <string name="report_24h">24 horas</string>
+    <string name="report_7d">7 dias</string>
+    <string name="report_sub_24h">TV ligada nas últimas 24 horas</string>
+    <string name="report_sub_7d">TV ligada nos últimos 7 dias</string>
+    <string name="report_app_24h">%1$s nas últimas 24 horas</string>
+    <string name="report_app_7d">%1$s nos últimos 7 dias</string>
+    <string name="report_no_access">Precisa de acesso de utilização: execute build-and-install.sh com SCREEN_TIME=1, ou adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>

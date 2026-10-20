@@ -190,6 +190,15 @@
                     android:drawableStart="@drawable/ic_wifi"
                     android:nextFocusDown="@+id/grid" />
 
+                <!-- Screen time report (screen_time, ReportPanel); hidden unless switched on. -->
+                <TextView
+                    android:id="@+id/btnReport"
+                    style="@style/TopButton"
+                    android:text="@string/report"
+                    android:drawableStart="@drawable/ic_report"
+                    android:visibility="gone"
+                    android:nextFocusDown="@+id/grid" />
+
                 <TextView
                     android:id="@+id/btnInputs"
                     style="@style/TopButton"

@@ -34,4 +34,13 @@
     <string name="cant_open">无法打开 %1$s</string>
     <string name="date_format">M月d日 EEEE</string>
     <string name="dream_name">时钟</string>
+    <string name="report">报告</string>
+    <string name="report_title">屏幕使用时间</string>
+    <string name="report_24h">24 小时</string>
+    <string name="report_7d">7 天</string>
+    <string name="report_sub_24h">过去 24 小时电视开启时间</string>
+    <string name="report_sub_7d">过去 7 天电视开启时间</string>
+    <string name="report_app_24h">过去 24 小时的 %1$s</string>
+    <string name="report_app_7d">过去 7 天的 %1$s</string>
+    <string name="report_no_access">需要使用情况访问权限：以 SCREEN_TIME=1 运行 build-and-install.sh，或 adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>

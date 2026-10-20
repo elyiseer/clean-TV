@@ -39,4 +39,13 @@
     <string name="on">Uklj.</string>
     <string name="off">Isklj.</string>
     <string name="enable">Uključi</string>
+    <string name="report">Izveštaj</string>
+    <string name="report_title">Vreme ispred ekrana</string>
+    <string name="report_24h">24 sata</string>
+    <string name="report_7d">7 dana</string>
+    <string name="report_sub_24h">TV uključen u poslednjih 24 sata</string>
+    <string name="report_sub_7d">TV uključen u poslednjih 7 dana</string>
+    <string name="report_app_24h">%1$s u poslednjih 24 sata</string>
+    <string name="report_app_7d">%1$s u poslednjih 7 dana</string>
+    <string name="report_no_access">Potreban je pristup podacima o korišćenju: pokrenite build-and-install.sh sa SCREEN_TIME=1 ili adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>

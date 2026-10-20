@@ -354,6 +354,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnInputs = findViewById(R.id.btnInputs);
         View btnSettings = findViewById(R.id.btnSettings);
         btnInputs.setOnClickListener(v -> showInputs());
+        View btnReport = findViewById(R.id.btnReport);
+        btnReport.setVisibility(cfg.screenTime ? View.VISIBLE : View.GONE);
+        btnReport.setOnClickListener(v -> showReport());
         btnWifi.setOnClickListener(v -> openNetworkPill());
         btnWifi.setOnLongClickListener(v -> {
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
@@ -376,17 +379,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 focusTile(lastFocused % COLUMNS);
                 return true;
             }
-            int firstButton = btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs : R.id.btnWifi;
+            int firstButton = btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs
+                    : btnReport.getVisibility() == View.VISIBLE ? R.id.btnReport : R.id.btnWifi;
             int leftButton = rtlMenuBar ? R.id.btnSettings : firstButton;
             int rightButton = rtlMenuBar ? firstButton : R.id.btnSettings;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return v.getId() == leftButton;
             return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == rightButton;
         };
         btnInputs.setOnKeyListener(pillKeys);
+        btnReport.setOnKeyListener(pillKeys);
         btnWifi.setOnKeyListener(pillKeys);
         btnSettings.setOnKeyListener(pillKeys);
         if (advancedEffects) {
-            for (View button : new View[]{btnInputs, btnWifi, btnSettings}) {
+            for (View button : new View[]{btnInputs, btnReport, btnWifi, btnSettings}) {
                 button.setOnFocusChangeListener((view, focused) -> view.animate()
                         .scaleX(focused ? 1.04f : 1f).scaleY(focused ? 1.04f : 1f)
                         .setDuration(160).start());
@@ -1206,6 +1211,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         int alignment = getResources().getBoolean(R.bool.rtl_menu_bar) ? Gravity.END : Gravity.START;
         dropIn(popup, panel, anchor, alignment);
         rows.getChildAt(0).requestFocus();
+    }
+
+    /** The Screen time panel, centred; its tabs switch between 24 hours and 7 days as they take focus. */
+    private void showReport() {
+        ReportPanel panel = new ReportPanel(this, handler);
+        glassPopup(panel.view, (int) (720 * density)).showAtLocation(root, Gravity.CENTER, 0, 0);
+        panel.tab24.requestFocus();
     }
 
     private PopupWindow glassPopup(View panel, int width) {

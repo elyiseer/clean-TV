@@ -58,4 +58,13 @@
     <string name="on">Açık</string>
     <string name="off">Kapalı</string>
     <string name="enable">Etkinleştir</string>
+    <string name="report">Rapor</string>
+    <string name="report_title">Ekran süresi</string>
+    <string name="report_24h">24 saat</string>
+    <string name="report_7d">7 gün</string>
+    <string name="report_sub_24h">Son 24 saatte TV açık</string>
+    <string name="report_sub_7d">Son 7 günde TV açık</string>
+    <string name="report_app_24h">Son 24 saatte %1$s</string>
+    <string name="report_app_7d">Son 7 günde %1$s</string>
+    <string name="report_no_access">Kullanım erişimi gerekli: build-and-install.sh betiğini SCREEN_TIME=1 ile çalıştırın veya adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>

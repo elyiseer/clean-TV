@@ -32,4 +32,13 @@
     <string name="on">Sí</string>
     <string name="off">No</string>
     <string name="enable">Activar</string>
+    <string name="report">Informe</string>
+    <string name="report_title">Tiempo de pantalla</string>
+    <string name="report_24h">24 horas</string>
+    <string name="report_7d">7 días</string>
+    <string name="report_sub_24h">TV encendida en las últimas 24 horas</string>
+    <string name="report_sub_7d">TV encendida en los últimos 7 días</string>
+    <string name="report_app_24h">%1$s en las últimas 24 horas</string>
+    <string name="report_app_7d">%1$s en los últimos 7 días</string>
+    <string name="report_no_access">Necesita acceso de uso: ejecuta build-and-install.sh con SCREEN_TIME=1, o adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>

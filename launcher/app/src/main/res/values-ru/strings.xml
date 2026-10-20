@@ -58,4 +58,13 @@
     <string name="on">Вкл.</string>
     <string name="off">Выкл.</string>
     <string name="enable">Включить</string>
+    <string name="report">Отчёт</string>
+    <string name="report_title">Экранное время</string>
+    <string name="report_24h">24 часа</string>
+    <string name="report_7d">7 дней</string>
+    <string name="report_sub_24h">ТВ включён за последние 24 часа</string>
+    <string name="report_sub_7d">ТВ включён за последние 7 дней</string>
+    <string name="report_app_24h">%1$s за последние 24 часа</string>
+    <string name="report_app_7d">%1$s за последние 7 дней</string>
+    <string name="report_no_access">Нужен доступ к статистике использования: запустите build-and-install.sh с SCREEN_TIME=1 или adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>

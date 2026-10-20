@@ -58,4 +58,13 @@
     <string name="card_state_new">新的</string>
     <string name="card_state_new_key">新金鑰</string>
     <string name="card_state_new_label">新名稱</string>
+    <string name="report">報告</string>
+    <string name="report_title">螢幕使用時間</string>
+    <string name="report_24h">24 小時</string>
+    <string name="report_7d">7 天</string>
+    <string name="report_sub_24h">過去 24 小時電視開啟時間</string>
+    <string name="report_sub_7d">過去 7 天電視開啟時間</string>
+    <string name="report_app_24h">過去 24 小時的 %1$s</string>
+    <string name="report_app_7d">過去 7 天的 %1$s</string>
+    <string name="report_no_access">需要使用情況存取權：以 SCREEN_TIME=1 執行 build-and-install.sh，或 adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>

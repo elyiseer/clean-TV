@@ -58,4 +58,13 @@
     <string name="on">Wł.</string>
     <string name="off">Wył.</string>
     <string name="enable">Włącz</string>
+    <string name="report">Raport</string>
+    <string name="report_title">Czas przed ekranem</string>
+    <string name="report_24h">24 godziny</string>
+    <string name="report_7d">7 dni</string>
+    <string name="report_sub_24h">TV włączony w ciągu ostatnich 24 godzin</string>
+    <string name="report_sub_7d">TV włączony w ciągu ostatnich 7 dni</string>
+    <string name="report_app_24h">%1$s w ciągu ostatnich 24 godzin</string>
+    <string name="report_app_7d">%1$s w ciągu ostatnich 7 dni</string>
+    <string name="report_no_access">Wymagany dostęp do danych o użyciu: uruchom build-and-install.sh z SCREEN_TIME=1 lub adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>

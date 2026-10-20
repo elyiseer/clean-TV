@@ -157,4 +157,10 @@ enable_service() {   # appends to enabled_accessibility_services without droppin
 }
 if [ "${INPUT_KEY_SERVICE:-0}" = 1 ]; then enable_service InputKeyService; fi
 if [ "${HOME_KEY_SERVICE:-0}" = 1 ]; then enable_service HomeKeyService; fi
+# Optional usage access for the Screen time report (screen_time in config.xml or a theme). Off unless
+# asked for: it lets the launcher read which apps were in front and when, on the TV only.
+#   SCREEN_TIME=1         grant usage access (appops GET_USAGE_STATS)
+if [ "${SCREEN_TIME:-0}" = 1 ]; then
+  "$PY" -I ../tools/tv.py 'appops set com.gathin.tvhome GET_USAGE_STATS allow && echo usage-access-granted'
+fi
 echo "Installed. Press Home on the remote to see it."

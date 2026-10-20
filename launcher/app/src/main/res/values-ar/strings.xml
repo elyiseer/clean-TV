@@ -58,4 +58,13 @@
     <string name="on">تشغيل</string>
     <string name="off">إيقاف</string>
     <string name="enable">تفعيل</string>
+    <string name="report">التقرير</string>
+    <string name="report_title">مدة استخدام الشاشة</string>
+    <string name="report_24h">24 ساعة</string>
+    <string name="report_7d">7 أيام</string>
+    <string name="report_sub_24h">تشغيل التلفزيون خلال آخر 24 ساعة</string>
+    <string name="report_sub_7d">تشغيل التلفزيون خلال آخر 7 أيام</string>
+    <string name="report_app_24h">%1$s خلال آخر 24 ساعة</string>
+    <string name="report_app_7d">%1$s خلال آخر 7 أيام</string>
+    <string name="report_no_access">يلزم الوصول إلى بيانات الاستخدام: شغّل build-and-install.sh مع SCREEN_TIME=1، أو adb shell appops set com.gathin.tvhome GET_USAGE_STATS allow</string>
 </resources>
