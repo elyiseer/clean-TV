@@ -70,6 +70,8 @@ final class Config {
     final boolean dockRow;
     /** Reorder button in the top bar (config.xml reorder_button); the Settings long-press menu offers it either way. */
     final boolean reorderButton;
+    /** Bluetooth pill in the top bar (config.xml bluetooth_button). Off unless config or a theme turns it on. */
+    final boolean bluetoothButton;
     final String vpnApp;
     final boolean showHomeSettingsShortcut;
     /** One line under the clock: CPU, free memory, free storage. Off unless config or a theme turns it on. */
@@ -109,7 +111,7 @@ final class Config {
                    String liveTvAction, Map<String, String> launchActions, Map<String, String> appLabels,
                    Map<String, String> appBanners, String sourcePanelService, String sourcePanelAction, String inputAction,
                    int columns, int rowsBelowDock, boolean animations, boolean advancedEffects,
-                   boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean dockTitle, boolean dockRow, boolean reorderButton, String vpnApp,
+                   boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean dockTitle, boolean dockRow, boolean reorderButton, boolean bluetoothButton, String vpnApp,
                    boolean showHomeSettingsShortcut, boolean showStats, boolean appLibrary, int backgroundColor, int skyIntensity,
                    int[] settingsKeycodes, boolean settingsKeyPanel, boolean wallpaperEnabled, File wallpaper, List<File> wallpapers,
                    int wallpaperRotationMinutes, int wallpaperDim, boolean overlayApplied,
@@ -139,6 +141,7 @@ final class Config {
         this.dockTitle = dockTitle;
         this.dockRow = dockRow;
         this.reorderButton = reorderButton;
+        this.bluetoothButton = bluetoothButton;
         this.vpnApp = vpnApp;
         this.showHomeSettingsShortcut = showHomeSettingsShortcut;
         this.showStats = showStats;
@@ -187,6 +190,7 @@ final class Config {
         boolean dockTitle = res.getBoolean(R.bool.dock_title);
         boolean dockRow = res.getBoolean(R.bool.dock_row);
         boolean reorderButton = res.getBoolean(R.bool.reorder_button);
+        boolean bluetoothButton = res.getBoolean(R.bool.bluetooth_button);
         String vpn = res.getString(R.string.vpn_app).trim();
         boolean homeSettings = res.getBoolean(R.bool.show_home_settings_shortcut);
         boolean showStats = res.getBoolean(R.bool.show_stats);
@@ -227,6 +231,7 @@ final class Config {
             dockTitle = bool(json, "dock_title", dockTitle);
             dockRow = bool(json, "dock_row", dockRow);
             reorderButton = bool(json, "reorder_button", reorderButton);
+            bluetoothButton = bool(json, "bluetooth_button", bluetoothButton);
             vpn = string(json, "vpn_app", vpn);
             homeSettings = bool(json, "show_home_settings_shortcut", homeSettings);
             showStats = bool(json, "show_stats", showStats);
@@ -288,7 +293,7 @@ final class Config {
                 packageMap(appBanners), panelService,
                 panelAction, inputAction,
                 Math.max(1, columns), Math.max(0, rowsBelow), animations, advancedEffects,
-                shamsi, greetingName, moduleCards, reducedMotion, dockTitle, dockRow, reorderButton, vpn, homeSettings, showStats, library, background,
+                shamsi, greetingName, moduleCards, reducedMotion, dockTitle, dockRow, reorderButton, bluetoothButton, vpn, homeSettings, showStats, library, background,
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, wallpaperEnabled, wallpaper,
                 wallpapers, rotationMinutes, wallpaperDim, applied,
                 festival, inputKeycodes, appKeys, json == null ? Collections.emptyList() : raceCalendar(json), cinematic);

@@ -40,6 +40,7 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `dock_title` | bool | The focused dock app's name in large type above the dock (`true`); `false` keeps only the glow |
 | `dock_row` | bool | The dock as its own row with a band (`true`); `false` makes the dock apps the first tiles of one plain grid |
 | `reorder_button` | bool | A reorder button in the top bar (`false` by default); reordering is always in the Settings button's long-press menu |
+| `bluetooth_button` | bool | A Bluetooth pill in the top bar (`false` by default). `theme.sh` grants `BLUETOOTH_CONNECT` and `BLUETOOTH_SCAN` when this is true |
 | `app_library` | bool | An App library pill after the last Home row: every installed app, add one to Home or take it off (`false` by default). The choices stay on the TV when a theme is pushed or reset; see [docs/app-library.md](../docs/app-library.md) |
 | `shamsi_date` | bool | Show the Solar Hijri date above the Gregorian one |
 | `greeting_name` | string | A name after the greeting, e.g. `"Mr. Trịnh"` for GOOD MORNING, MR. TRỊNH; empty for the greeting alone |
