@@ -52,6 +52,7 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `wallpaper` | bool | Show `wallpaper.jpg` from the theme folder (`true`), or ignore it (`false`) |
 | `wallpaper_rotation_minutes` | 0 to 1440 | Randomly rotate images in the theme's `wallpapers/` folder at this interval; 0 keeps the single-image behaviour |
 | `wallpaper_dim` | 0 to 90 | Black overlay over wallpaper images, in percent; 0 by default |
+| `night_from`, `night_until` | `HH:MM` | When the theme's `wallpaper_night.jpg` replaces the wallpaper or collection; 18:00 and 06:00 by default |
 | `festival` | string | Turns on a festive skin: the network pill becomes a diya whose flame follows the connection, Inputs a temple bell, Settings a marigold, and the first Home of the day gets a petal shower. `dussehra` and `diwali` have built-in greetings |
 | `festival_until` | `YYYY-MM-DD` | Last day the festive skin shows; it switches itself off after that. A malformed date turns it off |
 | `greeting` | string | Replaces the time-of-day greeting while the festive skin is on |
@@ -86,6 +87,18 @@ change time survive app/process restarts. Rotation runs only while Home is visib
 another app, an overdue background changes then. Images are decoded on a worker thread and bounded
 to the screen size. There is no download service, Internet permission or computer-side scheduler.
 The original system idle screensaver is left unchanged.
+
+### Night picture
+
+A `wallpaper_night.jpg` beside `config.json` takes over from `night_from` to `night_until` (`"HH:MM"`, 18:00
+and 06:00 unless the theme sets them; a window across midnight wraps), in front of `wallpaper.jpg` or a
+collection. Home checks on the minute tick that already updates the clock and when it comes back to the
+front, decodes the night picture on the same worker thread, and leaves the rotation state alone, so the day
+collection carries on from its last image in the morning. Without the file nothing changes.
+
+```json
+{ "wallpaper": true, "night_from": "19:00", "night_until": "06:30" }
+```
 
 ## Reduced motion
 

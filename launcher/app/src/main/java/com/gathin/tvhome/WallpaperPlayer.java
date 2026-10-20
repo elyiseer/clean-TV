@@ -13,12 +13,17 @@ import android.widget.ImageView;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Displays and rotates a theme's local wallpaper images while Home is visible. */
+/**
+ * Displays and rotates a theme's local wallpaper images while Home is visible. A theme's wallpaper_night.jpg, when
+ * there is one, replaces them from night_from to night_until (see NightWallpaper); the day rotation picks up
+ * where it left off in the morning.
+ */
 final class WallpaperPlayer {
     private final FrameLayout root;
     private final ImageView image;
@@ -33,11 +38,18 @@ final class WallpaperPlayer {
     private boolean closed;
     private boolean loading;
     private String displayed = "";
+    /** displayed while the night picture is up; no file name can look like it. */
+    private static final String NIGHT = "\u0000night";
+    private File night;
+    private final int nightFrom, nightUntil;
 
     WallpaperPlayer(Context context, FrameLayout root, Config config) {
         this.root = root;
         files = new ArrayList<>(config.wallpapers);
         interval = config.wallpaperRotationMinutes * 60_000L;
+        night = config.wallpaperNight;
+        nightFrom = config.nightFrom;
+        nightUntil = config.nightUntil;
         preferences = context.getSharedPreferences("wallpaper_rotation", Context.MODE_PRIVATE);
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         width = metrics.widthPixels;
@@ -66,6 +78,15 @@ final class WallpaperPlayer {
      * Only the later changes of a rotation decode in the background.
      */
     private void showFirst() {
+        if (isNight()) {
+            Bitmap bitmap = decode(night);
+            if (bitmap != null) {
+                image.setImageBitmap(bitmap);
+                displayed = NIGHT;
+                return;
+            }
+            night = null;   // unreadable or over 4K: day pictures only
+        }
         String previous = preferences.getString("image", "");
         File first = WallpaperRotation.find(files, previous);
         if (first == null) first = WallpaperRotation.pick(files, previous, random);
@@ -102,6 +123,10 @@ final class WallpaperPlayer {
 
     void update() {
         if (!active || closed || loading || files.isEmpty()) return;
+        if (isNight()) {
+            if (!NIGHT.equals(displayed)) showNight();
+            return;
+        }
         String previous = preferences.getString("image", "");
         File selected = WallpaperRotation.find(files, previous);
         long changed = preferences.getLong("changed", 0);
@@ -131,6 +156,36 @@ final class WallpaperPlayer {
                     preferences.edit().putString("image", displayed)
                             .putLong("changed", System.currentTimeMillis()).apply();
                 }
+            });
+        });
+    }
+
+    private boolean isNight() {
+        if (night == null) return false;
+        Calendar now = Calendar.getInstance();
+        return NightWallpaper.isNight(now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE), nightFrom, nightUntil);
+    }
+
+    /** Swaps in the night picture, decoded in the background like a rotation step; the rotation state is left alone. */
+    private void showNight() {
+        File file = night;
+        loading = true;
+        decoder.execute(() -> {
+            Bitmap bitmap = decode(file);
+            root.post(() -> {
+                loading = false;
+                if (closed || !active) {
+                    if (bitmap != null) bitmap.recycle();
+                    return;
+                }
+                if (bitmap == null) {
+                    night = null;
+                    Log.w("TvHome.Wallpaper", "Skipping unreadable night image: " + file.getName());
+                    update();
+                    return;
+                }
+                image.setImageBitmap(bitmap);
+                displayed = NIGHT;
             });
         });
     }
