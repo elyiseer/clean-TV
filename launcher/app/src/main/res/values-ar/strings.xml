@@ -87,4 +87,7 @@
         <item quantity="other">%1$d تطبيق</item>
     </plurals>
     <string name="greeting_with_name">%1$s، %2$s</string>
+    <string name="fire_tv_home_name">إعادة توجيه الرئيسية في Fire TV</string>
+    <string name="fire_tv_stock_home">استخدام Amazon Home</string>
+    <string name="fire_tv_home_description">فعّل هذه الخدمة في إعدادات تسهيل الاستخدام لتوجيه زر الرئيسية إلى هنا. قد يعرض Fire OS شاشة Amazon Home لمدة خمس ثوانٍ أولاً. لا تتم قراءة محتويات الشاشة. اختر استخدام Amazon Home لإيقاف إعادة التوجيه.</string>
 </resources>

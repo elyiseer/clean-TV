@@ -12,6 +12,13 @@ public class HomeSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (FireTvHomeService.available(this)) {
+            // The visible launcher-settings activity owns the dialog; this NoDisplay
+            // trampoline must always finish before onResume.
+            startActivity(new Intent(this, LauncherSettingsActivity.class).putExtra("fire_tv_home", true));
+            finish();
+            return;
+        }
         try {
             startActivity(new Intent(Settings.ACTION_HOME_SETTINGS));
             Toast.makeText(this, R.string.home_settings_help, Toast.LENGTH_LONG).show();

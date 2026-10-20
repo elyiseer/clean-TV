@@ -7,6 +7,17 @@
 -->
 <resources>
 
+    <!-- Opt-in stock HOME redirect, also accepted in a theme's config.json (#326).
+         Empty leaves other TVs alone. Enable Home redirect in Accessibility separately.
+         Nokia Streaming Box 8000: com.google.android.tvlauncher. -->
+    <string name="home_redirect_package" translatable="false"></string>
+    <!-- Fire TV's on-TV Enable option uses this package when no theme target is set. -->
+    <string name="fire_tv_stock_package" translatable="false">com.amazon.tv.launcher</string>
+    <string-array name="fire_tv_home_classes">
+        <item>com.amazon.tv.launcher.ui.HomeActivity_vNext</item>
+        <item>com.amazon.tv.launcher.ui.HomeActivity</item>
+    </string-array>
+
     <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
     <string-array name="dock_apps">
         <item>com.netflix.ninja</item>

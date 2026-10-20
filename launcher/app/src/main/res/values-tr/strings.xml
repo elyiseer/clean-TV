@@ -83,4 +83,7 @@
         <item quantity="other">%1$d uygulama</item>
     </plurals>
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="fire_tv_home_name">Fire TV ana ekran yönlendirmesi</string>
+    <string name="fire_tv_stock_home">Amazon Home kullan</string>
+    <string name="fire_tv_home_description">Home tuşunu buraya yönlendirmek için Erişilebilirlik bölümünde bu hizmeti etkinleştirin. Fire OS önce yaklaşık beş saniye Amazon Home gösterebilir. Ekran içeriği okunmaz. Yönlendirmeyi kapatmak için Amazon Home kullan seçeneğini seçin.</string>
 </resources>

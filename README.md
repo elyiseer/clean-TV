@@ -108,8 +108,9 @@ phoning home, no apps you never asked for.
 ## Supported TVs
 
 Anything running **Android TV** or **Google TV**. Samsung (Tizen) and LG (webOS) run different
-systems; see [SHOWCASE.md](SHOWCASE.md) for a webOS port. **Fire TV** takes the debloat half only,
-since Fire OS will not hand Home to a third-party launcher. A few China-market TCL sets refuse to
+systems; see [SHOWCASE.md](SHOWCASE.md) for a webOS port. **Fire TV** keeps Amazon as Home; the normal
+workflow covers debloat only. An [experimental, opt-in Home redirect](docs/FIRE_TV_HOME.md) can open
+this launcher afterward, with about a five-second delay on the tested Fire OS build. A few China-market TCL sets refuse to
 install any launcher at all; their lists say so in the header.
 
 Tested lists from contributors, one folder per model in [`examples/`](examples/):

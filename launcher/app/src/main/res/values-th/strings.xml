@@ -57,4 +57,7 @@
         <item quantity="other">%1$d แอป</item>
     </plurals>
     <string name="greeting_with_name">%1$s %2$s</string>
+    <string name="fire_tv_home_name">เปลี่ยนปลายทางปุ่ม Home ของ Fire TV</string>
+    <string name="fire_tv_stock_home">ใช้ Amazon Home</string>
+    <string name="fire_tv_home_description">เปิดบริการนี้ในการตั้งค่าการช่วยเหลือพิเศษเพื่อให้ปุ่ม Home เปิดหน้านี้ Fire OS อาจแสดง Amazon Home ก่อนประมาณห้าวินาที บริการไม่อ่านเนื้อหาบนหน้าจอ เลือกใช้ Amazon Home เพื่อปิดการเปลี่ยนปลายทาง</string>
 </resources>

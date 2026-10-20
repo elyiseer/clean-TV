@@ -65,4 +65,7 @@
         <item quantity="other">%1$d aplikacija</item>
     </plurals>
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="fire_tv_home_name">Preusmeravanje početnog ekrana Fire TV</string>
+    <string name="fire_tv_stock_home">Koristi Amazon Home</string>
+    <string name="fire_tv_home_description">Omogućite ovu uslugu u pristupačnosti da biste ovde preusmerili dugme Home. Fire OS može prvo prikazati Amazon Home oko pet sekundi. Sadržaj ekrana se ne čita. Izaberite Koristi Amazon Home da isključite preusmeravanje.</string>
 </resources>

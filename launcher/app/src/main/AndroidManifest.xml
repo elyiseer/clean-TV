@@ -20,6 +20,10 @@
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
         <intent>
@@ -32,6 +36,7 @@
         </intent>
         <!-- China-market MIUI TV firmware: the Settings and Wi-Fi pills fall back to Xiaomi's settings app. -->
         <package android:name="com.xiaomi.mitv.settings" />
+        <package android:name="com.amazon.tv.launcher" />
     </queries>
 
     <application
@@ -97,6 +102,18 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/home_key_service" />
+        </service>
+
+        <!-- Shared HOME redirect; retain component name for upgrades. Explicit Accessibility opt-in. -->
+        <service android:name=".FireTvHomeService"
+            android:label="@string/home_redirect_name"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice"
+                android:resource="@xml/fire_tv_home_service" />
         </service>
 
         <!-- Screensaver: pick it in Settings, or `settings put secure screensaver_components

@@ -90,4 +90,10 @@
     </plurals>
     <!-- The greeting, then greeting_name: "Good morning, Mr. Trịnh". -->
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="fire_tv_home_name">Fire TV Home redirect</string>
+    <string name="home_redirect_name">Home redirect</string>
+    <string name="home_redirect_stock_home">Use stock Home</string>
+    <string name="home_redirect_description">Enable Home redirect in Accessibility to open CleanYourTV after the configured stock Home appears. Firmware may delay the redirect. Screen contents and keys are not read. Choose Use stock Home to turn the redirect off.</string>
+    <string name="fire_tv_stock_home">Use Amazon Home</string>
+    <string name="fire_tv_home_description">Enable this service in Accessibility to redirect Home here. Fire OS may show Amazon Home for about five seconds first. Screen contents are not read. Choose Use Amazon Home to turn the redirect off.</string>
 </resources>

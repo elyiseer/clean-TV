@@ -58,4 +58,7 @@
         <item quantity="other">%1$d 个应用</item>
     </plurals>
     <string name="greeting_with_name">%1$s，%2$s</string>
+    <string name="fire_tv_home_name">Fire TV 主页重定向</string>
+    <string name="fire_tv_stock_home">使用 Amazon Home</string>
+    <string name="fire_tv_home_description">在无障碍设置中启用此服务，可将主页按钮重定向到此处。Fire OS 可能会先显示 Amazon Home 约五秒钟。此服务不会读取屏幕内容。选择“使用 Amazon Home”可关闭重定向。</string>
 </resources>

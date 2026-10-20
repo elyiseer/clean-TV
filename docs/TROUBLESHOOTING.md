@@ -155,3 +155,20 @@ TV 12) the line is `[TclAppBoot] ... calleeComponent = 'com.gathin.tvhome/.HomeK
 (`appops set com.gathin.tvhome APP_AUTO_START allow`) made the service bind on its own after a restart;
 toggling the service off and on in Accessibility works until the next restart. When reporting, give the
 model, build, current user and the relevant redacted lines, not the raw dump.
+
+### Fire OS: bound helper, but Amazon Home stays visible for several seconds
+
+On a Fire TV Stick 3rd generation (AFTSSS, Fire OS 7.7.1.7 / Android 9,
+`PS7717.5741N`), a separate experimental accessibility redirect was bound but
+Fire OS held its launcher activity request for roughly five seconds after Home.
+`ActivityManager` logged `Activity start request from <launcher UID> stopped`;
+the custom launcher resumed afterward. Direct activity and PendingIntent starts
+both showed the delay. Reducing the helper's own timer did not remove the hold.
+
+This is not a supported Home takeover or evidence that the reference
+`HomeKeyService` handles ordinary Fire TV Home. See the
+[device report](devices/amazon-fire-tv-stick-3rd-gen.md) for the timed trace,
+physical-remote limitations and recovery notes. Keep the stock launcher enabled
+and test the real remote rather than inferring success from a written setting.
+The separate [opt-in FireTvHomeService](FIRE_TV_HOME.md) ports that redirect;
+it does not remove the firmware's delay or change the existing key-filter service.

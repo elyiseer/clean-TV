@@ -58,6 +58,7 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `accent_color` | `#RRGGBB` | Colour of the focus glow while the festive skin is on; diya gold if not set |
 | `settings_key_keycodes` | list of keycodes | Remote buttons that open Settings, for `HomeKeyService` (TCL Google TV gear: `[83]`) |
 | `settings_key_panel` | bool | Those buttons open a small quick settings panel (TV settings, Display, Network, Apps, Launcher settings) instead of the TV's Settings |
+| `home_redirect_package` | string | Stock HOME package that cannot be replaced, e.g. `com.google.android.tvlauncher` on the Nokia Streaming Box 8000. Empty by default. Enable **Home redirect** in Accessibility separately. Uses the shared window-only helper, with 200 ms coalescing, cancellation and at most three requests per rolling five seconds. See [setup and recovery](../docs/FIRE_TV_HOME.md#other-tvs-including-nokia) |
 | `input_key_keycodes` | list of keycodes | More remote buttons that open the input switcher, for `InputKeyService` (`KEYCODE_TV` and `KEYCODE_TV_INPUT` always do) |
 | `app_keys` | list of strings | Remote buttons that open an app, as `"190:com.google.android.youtube.tv"` or `"KEYCODE_BUTTON_3:com.google.android.youtube.tv"`, for `InputKeyService` or `HomeKeyService` |
 

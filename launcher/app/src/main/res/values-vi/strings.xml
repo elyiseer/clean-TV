@@ -65,6 +65,9 @@
     <string name="card_state_new_key">Khóa mới</string>
     <string name="card_state_new_label">Tên mới</string>
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="fire_tv_home_name">Chuyển hướng màn hình chính Fire TV</string>
+    <string name="fire_tv_stock_home">Dùng Amazon Home</string>
+    <string name="fire_tv_home_description">Bật dịch vụ này trong Trợ năng để chuyển nút Home đến đây. Fire OS có thể hiển thị Amazon Home trước khoảng năm giây. Nội dung màn hình không được đọc. Chọn Dùng Amazon Home để tắt chuyển hướng.</string>
     <string name="dock_edit">Chỉnh sửa dock</string>
     <string name="dock_edit_hint">Chọn vị trí trên dock cần đổi rồi nhấn OK. Nhấn Quay lại để kết thúc.</string>
     <string name="dock_edit_pick_app">Giờ chọn ứng dụng để đặt vào đó rồi nhấn OK. Nhấn Quay lại để chọn vị trí khác.</string>

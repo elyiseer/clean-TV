@@ -64,6 +64,9 @@
     <string name="card_state_new_key">Uusi avain</string>
     <string name="card_state_new_label">Uusi nimi</string>
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="fire_tv_home_name">Fire TV:n kotipainikkeen uudelleenohjaus</string>
+    <string name="fire_tv_stock_home">Käytä Amazon Homea</string>
+    <string name="fire_tv_home_description">Ota tämä palvelu käyttöön esteettömyysasetuksissa ohjataksesi kotipainikkeen tänne. Fire OS voi näyttää ensin Amazon Homen noin viiden sekunnin ajan. Näytön sisältöä ei lueta. Poista ohjaus valitsemalla Käytä Amazon Homea.</string>
     <string name="stats_cpu">Suoritin %1$d %%</string>
     <string name="stats_memory">Muistia vapaana %1$d Mt</string>
     <string name="stats_storage">Tallennustilaa vapaana %1$s</string>

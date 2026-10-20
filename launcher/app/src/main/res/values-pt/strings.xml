@@ -71,4 +71,7 @@
         <item quantity="other">%1$d apps</item>
     </plurals>
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="fire_tv_home_name">Redirecionamento do início do Fire TV</string>
+    <string name="fire_tv_stock_home">Usar Amazon Home</string>
+    <string name="fire_tv_home_description">Ative este serviço em Acessibilidade para redirecionar o início para aqui. O Fire OS pode mostrar primeiro o Amazon Home por cerca de cinco segundos. O conteúdo da tela não é lido. Escolha Usar Amazon Home para desativar o redirecionamento.</string>
 </resources>

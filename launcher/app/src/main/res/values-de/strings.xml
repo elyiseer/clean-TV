@@ -60,4 +60,7 @@
         <item quantity="other">%1$d Apps</item>
     </plurals>
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="fire_tv_home_name">Fire-TV-Home-Weiterleitung</string>
+    <string name="fire_tv_stock_home">Amazon Home verwenden</string>
+    <string name="fire_tv_home_description">Aktiviere diesen Dienst unter Bedienungshilfen, um Home hierher umzuleiten. Fire OS zeigt eventuell zuerst etwa fünf Sekunden lang Amazon Home. Bildschirminhalte werden nicht gelesen. Wähle Amazon Home verwenden, um die Weiterleitung auszuschalten.</string>
 </resources>
