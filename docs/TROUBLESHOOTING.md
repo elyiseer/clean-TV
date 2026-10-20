@@ -130,6 +130,16 @@ Things that bit us or contributors, so they don't bite you. Commands use `tools/
   `/data/local/tmp` and, when copying them in is refused, writes them through the launcher's
   `ThemeProvider` instead. A launcher installed before that provider existed doesn't have it: run
   `launcher/build-and-install.sh` once, then push the theme again.
+- **Google TV comes back after a few remote presses**, seen on XGIMI (MoGo 3 Pro, Google TV 14). The
+  remote's app buttons (YouTube, Netflix, Prime Video), the programmable button, the profile button and power
+  all send F keys that the system hands to `com.xgimi.xrmservice/.XgimiGlobalKeyBroadcast` as global keys
+  (`tools/tv.py 'dumpsys window' | grep -A40 mKeyMapping` lists them). That receiver runs
+  `pm enable com.google.android.apps.tv.launcherx` on every one of them, so the stock launcher takes Home back.
+  Keys listed in `app_keys` are taken by the key services before global key dispatch, so XGIMI's receiver never
+  sees them: `examples/xgimi-mogo-3-pro` lists the app buttons. Power (F11) can't be taken over, because its
+  sleep and power-menu handling needs system permissions. For that one, run with `HOME_KEY_SERVICE=1` and set
+  `stock_home_redirect` to `com.google.android.apps.tv.launcherx`: if it comes back, its home screen is sent
+  straight back here, and `tools/disable.sh` with the list disables it again.
 - **No on-screen keyboard** after switching launchers, seen on Xiaomi: the default input method
   pointed at a Baidu keyboard that isn't installed. Fix:
   `tools/tv.py 'ime set com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME'`
