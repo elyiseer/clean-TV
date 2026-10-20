@@ -13,6 +13,8 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.content.pm.ChangedPackages;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RadialGradient;
@@ -140,6 +142,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private List<Cards.Card> cards = Collections.emptyList();
     /** The grid has been laid out and focused since the last resume; the card prompt waits for this. */
     private boolean tilesReady;
+    /** Between onResume and onPause; package broadcasts while paused only mark the tiles stale. */
+    private boolean resumed;
+    /**
+     * The tiles no longer match the TV: never built, a package changed while Home was away, or the
+     * drawables were dropped under memory pressure. Otherwise a return to Home keeps the tiles as they are.
+     */
+    private boolean tilesStale = true;
+    /** The grid's entry animation has played; it plays once per build from scratch, not on every return. */
+    private boolean tilesShown;
+    /** PackageManager's change counter at the last check (getChangedPackages). */
+    private int packageSeq;
+    private int backgroundColor;
+    private File wallpaperFile;
+    private android.widget.ImageView wallView;
     private Dialog cardPrompt;
     /** Set when a decision could not be saved: no more prompts until the next resume, instead of asking in a loop. */
     private boolean promptsPaused;
@@ -192,7 +208,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             // Updates send REMOVED followed by ADDED; keep the tile until the new APK is ready.
             if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction())
                     && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return;
-            reloadApps(false);
+            if (!resumed) {
+                tilesStale = true;   // rebuilt when Home comes back
+                return;
+            }
+            reloadApps(false, true);
         }
     };
     private final Runnable minuteTick = new Runnable() {
@@ -209,6 +229,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // The root (or the wallpaper) paints every pixel; a window background under it is a wasted full-screen fill.
+        getWindow().setBackgroundDrawable(null);
         density = getResources().getDisplayMetrics().density;
         // config.xml, overlaid by config.json from a pushed theme (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
@@ -225,8 +247,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         sourcePanelAction = cfg.sourcePanelAction;
 
         root = findViewById(R.id.root);
-        root.setBackgroundColor(cfg.backgroundColor);
-        if (cfg.wallpaper != null) showWallpaper(cfg.wallpaper);
+        backgroundColor = cfg.backgroundColor;
+        root.setBackgroundColor(backgroundColor);
+        wallpaperFile = cfg.wallpaper;
+        if (wallpaperFile != null) showWallpaper(wallpaperFile);
         sky = findViewById(R.id.sky);
         sky.setIntensity(cfg.skyIntensity);
         glass = findViewById(R.id.glass);
@@ -404,6 +428,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         packageFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         packageFilter.addAction(Intent.ACTION_PACKAGE_CHANGED);
         packageFilter.addDataScheme("package");
+        // Registered for the activity's life, not just while resumed: a package that changes while
+        // another app is in front marks the tiles stale, so returning Home rebuilds only when needed.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(packageReceiver, packageFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(packageReceiver, packageFilter);
+        }
 
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
@@ -457,6 +488,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             wall.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
             wall.setImageBitmap(bmp);
             root.addView(wall, 0, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            wallView = wall;
+            root.setBackground(null);   // the picture covers the screen; the colour under it would be overdraw
         } catch (Exception | OutOfMemoryError e) {
             // A bad or huge picture must never take the home screen down; the plain colour stays.
         }
@@ -479,16 +512,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(packageReceiver, packageFilter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(packageReceiver, packageFilter);
-        }
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         // A festival that started or ended while Home was in the background: rebuild with or without it.
@@ -496,11 +519,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             recreate();
             return;
         }
+        resumed = true;
+        tilesReady = false;
         promptsPaused = false;
-        if (rebuildOnResume) {
-            tilesReady = false;
-            reloadApps(true);
-        }
+        if (wallpaperFile != null && wallView == null) showWallpaper(wallpaperFile);   // dropped by onTrimMemory
+        // Both checks run every time: packagesChanged() also moves the counter on.
+        boolean changed = packagesChanged();
+        reloadApps(true, changed || tilesStale || rebuildOnResume);
         rebuildOnResume = false;
         updateGreeting();
         updateWifiLabel();
@@ -523,12 +548,31 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (requestCode == LAUNCHER_SETTINGS_REQUEST && resultCode == RESULT_OK) recreate();
     }
 
-    /** Rebuilds the tiles (and the module cards), then puts focus back where it was. */
-    private void reloadApps(boolean animate) {
+    /**
+     * True when a package was added, removed or updated since the last call (or the platform can't say).
+     * One cheap call; when it says nothing changed, coming back Home skips the app and card scan.
+     */
+    private boolean packagesChanged() {
+        try {
+            ChangedPackages cp = getPackageManager().getChangedPackages(packageSeq);
+            if (cp == null) return false;
+            packageSeq = cp.getSequenceNumber();
+            return true;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    /**
+     * Puts focus back where it was, after rebuilding the tiles (and the module cards) when reload is set.
+     * resume: Home is coming to the front, so the glass and the hero fade back in on the returning tile.
+     */
+    private void reloadApps(boolean resume, boolean reload) {
+        final boolean animate = resume && reload && !tilesShown;
         // Capture the app before rebinding can move focus and overwrite its key.
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
-        final boolean restoreFocus = animate || grid.hasFocus();
+        final boolean restoreFocus = resume || grid.hasFocus();
         if (restoreFocus) {
             glassShown = false;
             glass.setAlpha(0f);
@@ -536,8 +580,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             heroName.setAlpha(0f);
             ambient.setAlpha(0f);
         }
-        reloadTiles();
+        if (reload) reloadTiles();
         if (animate && animations && !reducedMotion) grid.scheduleLayoutAnimation();
+        tilesShown = true;
 
         if (restoreFocus) {
             // Follow the same app, or the nearest remaining slot when it was removed.
@@ -564,8 +609,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
         final List<Cards.Card> none = Collections.emptyList();
-        cards = moduleCards ? CardFeature.run(() -> Cards.discover(this, hiddenApps, Cards.load(Cards.storeFile(this))), none) : none;
-        adapter.reload(cards.isEmpty() ? none : CardFeature.run(() -> Cards.shown(cards), none));
+        // One LEANBACK query for both the tiles and the card checks.
+        final List<ResolveInfo> leanback = getPackageManager().queryIntentActivities(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER), 0);
+        cards = moduleCards ? CardFeature.run(() -> Cards.discover(this, hiddenApps, () -> Cards.load(Cards.storeFile(this)), leanback), none) : none;
+        adapter.reload(cards.isEmpty() ? none : CardFeature.run(() -> Cards.shown(cards), none), leanback);
+        tilesStale = false;
         lastFocusedKey = returnKey;
         lastFocused = returnSlot;
     }
@@ -588,6 +637,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onPause() {
         super.onPause();
+        resumed = false;
         stopAmbientAnimation();
         heroName.animate().cancel();
         ambient.animate().cancel();
@@ -598,11 +648,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (openPopup != null) openPopup.dismiss();
     }
 
+    /**
+     * Another app needs the memory while Home is in the background: let go of every tile's artwork and
+     * the wallpaper, and rebuild them when Home comes back. Not at UI_HIDDEN, the ordinary trip to an
+     * app, where keeping them is what makes the return instant.
+     */
     @Override
-    protected void onStop() {
-        super.onStop();
-        unregisterReceiver(packageReceiver);
-        rebuildOnResume = true;
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        // RUNNING_LOW and CRITICAL also arrive while Home is hidden when an accessibility service keeps
+        // the process in the foreground; never blank the screen the owner is looking at.
+        boolean due = level >= TRIM_MEMORY_BACKGROUND
+                || level == TRIM_MEMORY_RUNNING_LOW || level == TRIM_MEMORY_RUNNING_CRITICAL;
+        if (!due || resumed) return;
+        adapter.clear();
+        tilesStale = true;
+        tilesShown = false;
+        if (wallView != null) {
+            wallView.setImageDrawable(null);
+            root.removeView(wallView);
+            wallView = null;
+            root.setBackgroundColor(backgroundColor);
+        }
     }
 
     @Override
@@ -614,6 +681,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        unregisterReceiver(packageReceiver);
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (tim != null) tim.unregisterCallback(inputCallback);
