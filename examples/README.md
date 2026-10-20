@@ -131,6 +131,7 @@ on that firmware, grouped and commented. These are starting points: comment out 
 
 Notes for models that have no tested list yet live in [`docs/devices/`](../docs/devices/):
 
+- [Durabrand DB Android TV 4K `DURAT32ISDB`](../docs/devices/durabrand-durat32isdb.md) (`dupont`, m7332 Haier/CVTE board, Android TV 11 `RTM6.230109.232`): one-day owner report, ten packages, the two the firmware turns back on at every boot, the Input panel belonging to the MediaTek TV app instead of `tvlauncher`, and the hidden production menu that leaves Play services and Chromecast disabled until it is exited by hand.
 - [TCL `75c63b`](../docs/devices/tcl-75c63b.md), owner-reported retail model, `Smart TV Pro` / `BeyondTV4`, Android 11, `V8-R51MT05-LF1V652`: launcher-only installation, HOME priorities and component restrictions, correct Live TV player package, restoration and explicit test limits.
 - [Xiaomi MiTV-MFTR0 "freeguy"](../docs/devices/xiaomi-mitv-mftr0-freeguy.txt), China, Android 14: inputs, Xiaomi settings intents, app discovery.
 

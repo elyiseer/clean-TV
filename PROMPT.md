@@ -56,6 +56,12 @@ Debloat
 - Before touching streaming apps, voice assistant, Chromecast, Miracast or the update service, ask me
   which ones I use with a checklist question and disable only what I don't tick.
 - Run `pm` commands one per shell call, chained commands may silently stop after the first.
+- Don't launch a package whose name says factory, production, AT or fac menu (`com.cvte.tv.hkcfac`,
+  `com.at.factory.*`, `mediatek.factorymenu.ui` and the like) to see what it does, even read-only:
+  on Haier/CVTE boards opening one flips a factory-mode flag that kills the Input key and CEC, and
+  makes the next boot disable Play services, Netflix and Chromecast - which the shell then cannot
+  re-enable. `dumpsys package <name>` tells you what a package is without starting it, and
+  `docs/TROUBLESHOOTING.md` has the way out if one has been opened.
 - Disable in small batches and screenshot between them: a batch can take something load-bearing with
   it and you cannot tell which.
 - Offer me ad-blocking DNS as an optional extra: on Android 9 and newer, Private DNS set to an
