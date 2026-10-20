@@ -1503,8 +1503,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // showing a dash that never fills in.
         StringBuilder line = new StringBuilder();
         if (cpu >= 0) line.append(getString(R.string.stats_cpu, cpu));
-        long mem = memAvailableMb();
-        if (mem >= 0) appendStat(line, getString(R.string.stats_memory, mem));
+        long[] mem = memUsedOfTotalMb();
+        if (mem != null) appendStat(line, getString(R.string.stats_memory, mem[0], mem[1]));
         String free = formatGb(Environment.getDataDirectory().getFreeSpace());
         if (!free.isEmpty()) appendStat(line, getString(R.string.stats_storage, free));
         return line.toString();
@@ -1591,18 +1591,26 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return Math.max(0, Math.min(100, busy));
     }
 
-    private long memAvailableMb() {
+    /** RAM usage as {used, total} in MB, used = MemTotal - MemAvailable, e.g. "945 / 1536 MB". Used over
+     *  free so the line reads as a load against a known whole; null when /proc/meminfo cannot be read. */
+    private long[] memUsedOfTotalMb() {
+        long available = -1, total = -1;
         try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader("/proc/meminfo"))) {
             String line;
+            String[] t;
             while ((line = r.readLine()) != null) {
                 if (line.startsWith("MemAvailable:")) {
-                    String[] t = line.split("\\s+");
-                    return t.length >= 2 ? Long.parseLong(t[1]) / 1024 : -1;
+                    t = line.split("\\s+");
+                    if (t.length >= 2) available = Long.parseLong(t[1]) / 1024;
+                } else if (line.startsWith("MemTotal:")) {
+                    t = line.split("\\s+");
+                    if (t.length >= 2) total = Long.parseLong(t[1]) / 1024;
                 }
             }
         } catch (IOException | NumberFormatException ignored) {
         }
-        return -1;
+        if (available < 0 || total <= 0) return null;
+        return new long[]{Math.max(0, total - available), total};
     }
 
     private static String readFirstLine(String path) {
