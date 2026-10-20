@@ -112,8 +112,10 @@ phoning home, no apps you never asked for.
 
 Anything running **Android TV** or **Google TV**. Samsung (Tizen) and LG (webOS) run different
 systems; see [SHOWCASE.md](SHOWCASE.md) for a webOS port. **Fire TV** takes the debloat half only,
-since Fire OS will not hand Home to a third-party launcher. A few China-market TCL sets refuse to
-install any launcher at all; their lists say so in the header.
+since Fire OS will not hand Home to a third-party launcher. A few China-market TCL sets refuse
+every sideload, launcher or not; their lists say so in the header, and
+[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) has the one verifier workaround reported so far
+(a short `com.android.packageinstaller` window).
 
 Tested lists from contributors, one folder per model in [`examples/`](examples/):
 
