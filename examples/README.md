@@ -131,6 +131,7 @@ on that firmware, grouped and commented. These are starting points: comment out 
 
 Notes for models that have no tested list yet live in [`docs/devices/`](../docs/devices/):
 
+- [FPD CG50-C3](../docs/devices/fpd-cg50-c3.md), KTC-built `EcoTV Pro A` / `FPD_4KHA0`, MediaTek, Google TV 11 `RTM9.241015.016`, Canada: a one-day list, kept as a note for that reason; setupwraith owned a saved network that was not the one in use, so `FORCE_SETUPWRAITH=1` was safe; the RC-36 remote's gear and notifications buttons arrive as scancodes 240/362 with `KEY_UNKNOWN`/`KEY_PROGRAM`, so they need `settings_key_scancodes` rather than a keycode.
 - [TCL `75c63b`](../docs/devices/tcl-75c63b.md), owner-reported retail model, `Smart TV Pro` / `BeyondTV4`, Android 11, `V8-R51MT05-LF1V652`: launcher-only installation, HOME priorities and component restrictions, correct Live TV player package, restoration and explicit test limits.
 - [Xiaomi MiTV-MFTR0 "freeguy"](../docs/devices/xiaomi-mitv-mftr0-freeguy.txt), China, Android 14: inputs, Xiaomi settings intents, app discovery.
 

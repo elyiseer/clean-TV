@@ -85,6 +85,9 @@ Launcher
   Input and Settings/dashboard buttons, so after disabling it ask me to press each one, and remap any that
   do nothing with the launcher's key services: `input_key_keycodes` and `app_keys` with
   INPUT_KEY_SERVICE=1, `settings_key_keycodes` with HOME_KEY_SERVICE=1 (`config.xml` or the theme).
+  A button the TV logs as `KEY_UNKNOWN` or `KEY_PROGRAM` cannot be matched by keycode, since every
+  unmapped button shares it: read the scancode with `getevent -lt` and use `settings_key_scancodes`,
+  which only `config.xml` carries (a theme can set keycodes, not scancodes).
 - On Android 11 and newer the launcher must declare `<queries>` for `android.intent.category.LEANBACK_LAUNCHER`,
   or package visibility silently hides every app and the grid comes up empty; target a recent SDK, some
   Google TV 14 sets refuse older targets at install.
