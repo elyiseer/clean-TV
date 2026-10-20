@@ -316,6 +316,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (!cfg.dockTitle) hero.setVisibility(View.GONE);
         greeting = findViewById(R.id.greeting);
         greetingColor = greeting.getCurrentTextColor();
+        if (getResources().getBoolean(R.bool.rtl_menu_bar)) {
+            // Center Hebrew greetings over the numeric time, independent of a visible AM/PM label.
+            findViewById(R.id.clock).addOnLayoutChangeListener((v, l, t, right, bottom, ol, ot, or, ob) -> {
+                ViewGroup.LayoutParams params = greeting.getLayoutParams();
+                if (params.width != right - l) {
+                    params.width = right - l;
+                    greeting.setLayoutParams(params);
+                }
+                greeting.setTranslationX(l);
+            });
+        }
         btnWifi = findViewById(R.id.btnWifi);
         shamsiDate = findViewById(R.id.shamsiDate);
         stats = findViewById(R.id.stats);
@@ -1503,11 +1514,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // showing a dash that never fills in.
         StringBuilder line = new StringBuilder();
         if (cpu >= 0) line.append(getString(R.string.stats_cpu, cpu));
-        long mem = memAvailableMb();
-        if (mem >= 0) appendStat(line, getString(R.string.stats_memory, mem));
-        String free = formatGb(Environment.getDataDirectory().getFreeSpace());
+        long[] memory = memoryCapacityMb();
+        String mem = StatsCapacity.memory(memory[0], memory[1]);
+        if (!mem.isEmpty()) appendStat(line, getString(R.string.stats_memory, mem));
+        java.io.File data = Environment.getDataDirectory();
+        String free = StatsCapacity.storage(data.getFreeSpace(), data.getTotalSpace());
         if (!free.isEmpty()) appendStat(line, getString(R.string.stats_storage, free));
-        return line.toString();
+        return StatsText.forLocale(line.toString(), getResources().getConfiguration().getLocales().get(0));
     }
 
     // -1: need another sample. -2: this source cannot be read (Android 9 hides /proc/stat from apps).
@@ -1591,18 +1604,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return Math.max(0, Math.min(100, busy));
     }
 
-    private long memAvailableMb() {
+    private long[] memoryCapacityMb() {
+        long available = -1, total = -1;
         try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader("/proc/meminfo"))) {
             String line;
             while ((line = r.readLine()) != null) {
-                if (line.startsWith("MemAvailable:")) {
-                    String[] t = line.split("\\s+");
-                    return t.length >= 2 ? Long.parseLong(t[1]) / 1024 : -1;
+                if (line.startsWith("MemAvailable:") || line.startsWith("MemTotal:")) {
+                    String[] parts = line.trim().split("\\s+");
+                    if (parts.length < 2) continue;
+                    long mb = Long.parseLong(parts[1]) / 1024;
+                    if (line.startsWith("MemAvailable:")) available = mb;
+                    else total = mb;
                 }
             }
-        } catch (IOException | NumberFormatException ignored) {
-        }
-        return -1;
+        } catch (IOException | NumberFormatException ignored) { }
+        return new long[]{available, total};
     }
 
     private static String readFirstLine(String path) {
@@ -1611,13 +1627,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         } catch (IOException e) {
             return null;
         }
-    }
-
-    private static String formatGb(long bytes) {
-        if (bytes <= 0) return "";
-        double gb = bytes / (1024.0 * 1024 * 1024);
-        return gb >= 10 ? String.format(Locale.US, "%.0f GB", gb)
-                : String.format(Locale.US, "%.1f GB", gb);
     }
 
     // ---- navigation ------------------------------------------------------------------------------
