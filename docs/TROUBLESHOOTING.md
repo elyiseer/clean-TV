@@ -88,7 +88,14 @@ Things that bit us or contributors, so they don't bite you. Commands use `tools/
   setupwraith's components is refused with a SecurityException. Disabling the whole
   `com.google.android.tungsten.setupwraith` package is what frees the slot. It is the first-run
   setup wizard, so everyday use is unaffected, but re-enable it before a factory reset - list it in
-  your `debloat.txt` and `tools/restore.sh` does that for you.
+  your `debloat.txt` and `tools/restore.sh` does that for you. Measured again on a Google TV
+  Streamer (`kirkwood`, `UTTK.260317.003`): a launcher built with `android:priority="3"` on its HOME
+  filter (`aapt2 dump xmltree` finds it in the installed APK) still has no `mPriority` line in
+  `dumpsys package`, and `cmd role get-role-holders android.app.role.HOME` names the new launcher
+  while the HOME key lands on `setupwraith/.RecoveryActivity` anyway. `cmd package resolve-activity`
+  and `query-activities` answer with the resolver table's winner, which is not necessarily the
+  activity that takes focus: `dumpsys activity activities | grep mFocusedApp` is the ground truth,
+  and it is what to check before saying the takeover worked.
 - **The TV drops off Wi-Fi for good the moment setupwraith is disabled**, seen on Google TV 14 (Sony
   BRAVIA 9 II, Philips R8G, Skyworth SWTV-24NA-4K NF, Xiaomi TV Box S 3rd gen MiTV-AFMU0) and on a TCL
   G07 on Google TV 11 (build AR17; on AR20 the network belonged to `android.uid.system`). A Wi-Fi
@@ -113,9 +120,14 @@ Things that bit us or contributors, so they don't bite you. Commands use `tools/
   `pm disable-user` on `setupwraith/.RecoveryActivity` is refused with `SecurityException: Shell
   cannot change component state`. So either debloat without setupwraith and launcherx, or re-enable
   setupwraith after each boot, wait for `ClientAuthSigner`, then disable it again: the receiver keeps
-  the credentials in memory, so casting survives until the next reboot. Reported on Google's own
-  Chromecast hardware so far; the Xiaomi Mi Box S 2nd gen list says casting from a Pixel still works
-  there with setupwraith off.
+  the credentials in memory, so casting survives until the next reboot - and only in that process.
+  `am force-stop com.google.android.apps.mediashell` followed by the receiver coming back prints
+  `Retry loading factory credentials` and `No private key, hence empty signature` again, so anything
+  that restarts it (a crash, a force-stop, an update) needs the same sequence. Reported on Google's
+  own Chromecast hardware (`boreal`) and, with the same log lines, on a Google TV Streamer
+  (`kirkwood`, `UTTK.260317.003`), where the `CastInfoProvider` also lives inside the setupwraith
+  APK; the Xiaomi Mi Box S 2nd gen list says casting from a Pixel still works there with
+  setupwraith off.
 - **The TV drops off Wi-Fi every minute right after the install**, seen on Google TV 14 (Xiaomi
   MiTV-MZTU0): the same setupwraith `.RecoveryActivity` took Home and system_server crash-looped
   on it. The install script now starts the new launcher before disabling the stock one, sets the
@@ -123,7 +135,12 @@ Things that bit us or contributors, so they don't bite you. Commands use `tools/
   Home resolves and re-enables the stock launcher if it is not the new one. Disable setupwraith as
   above. To confirm it is this bug: `logcat -b crash` shows `FATAL EXCEPTION IN SYSTEM PROCESS:
   android.display`, and the main log shows `setupwraith/.RecoveryActivity` being started every
-  200 ms or so. If you're already in the loop:
+  200 ms or so. On a Google TV Streamer (`kirkwood`, `UTTK.260317.003`) the same loop came with its
+  own signature - `IllegalArgumentException: positionChildAt: container=Task=... is not a child of
+  container=Task=1 current parent=null` at `WindowContainer.positionChildAt` /
+  `Task.moveToBack` / `TransitionController.tryStartCollectFromQueue` - and repeated roughly every
+  47 s, each cycle taking setupwraith and SystemUI down with `DeadSystemException` too. If you're
+  already in the loop:
   `tools/tv.py 'pm enable --user 0 com.google.android.apps.tv.launcherx'`.
 - **`theme.sh` fails with "couldn't create file: Permission denied"**, seen on TCL G07 (Android 11): the
   shell is not in the group that may write `Android/data`. `theme.sh` stages the files in

@@ -74,7 +74,11 @@ Launcher
   Android TV launcher instead (Java, AndroidX RecyclerView, minSdk matching the TV, debug build is fine),
   install it over ADB, set it as the default home and disable the stock launcher. If several apps claim
   the HOME intent, list them with `cmd package query-activities -a android.intent.action.MAIN -c
-  android.intent.category.HOME` and set the default with `cmd package set-home-activity`.
+  android.intent.category.HOME` and set the default with `cmd package set-home-activity`. Those two
+  commands can both name your launcher while Home still opens something else: on some Google TV builds
+  `set-home-activity` prints `Success` and changes nothing, and setupwraith's `.RecoveryActivity`
+  keeps the key. Confirm with `dumpsys activity activities | grep mFocusedApp` before telling me the
+  takeover worked.
 - Before disabling the stock launcher, check which other apps claim HOME: on Google TV the setup wizard
   (`com.google.android.tungsten.setupwraith`) takes over even after the stock launcher is disabled, and
   the matching `examples/` header says what to do. Before disabling setupwraith, run
