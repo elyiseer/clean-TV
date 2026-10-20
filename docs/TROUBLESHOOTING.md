@@ -183,6 +183,11 @@ tools/tv.py 'dumpsys accessibility'
   press as `handleAction<keycode>` in `logcat`. Put it in `input_key_keycodes` (opens Inputs) or
   `app_keys` (`keycode:package`), reinstall with `INPUT_KEY_SERVICE=1` and press the real button.
 
+A force-stop switches the helpers off for good: after `am force-stop com.gathin.tvhome` (or Force stop in
+Settings > Apps) Android removes the launcher's services from the enabled list, and they do not come back
+when the launcher starts again (seen on a TCL 55C715, Android TV 9). Enable them again the same way you did
+the first time, and avoid force-stopping the launcher while testing.
+
 Enabled but never bound points at a firmware restriction on auto-starting sideloaded services (some TCL
 builds log `OP_AUTO_START` denials). Look at `logcat` for the binding failure before changing settings,
 and do not rewrite the enabled-services list or grant app-ops as a blanket fix. On a TCL 55S470G (Google
