@@ -85,6 +85,13 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     }
 
     static final float FOCUS_SCALE = 1.10f;
+    /**
+     * compact_ui magnification (CompactHome.magnify): tiles rest at REST of their usual size, the focused one
+     * grows by MAGNIFIED (a little past the usual focused size) and its row neighbours by NEAR. Set once from
+     * the config before the grid is built; off with reduced_motion or animations off.
+     */
+    static boolean magnify;
+    static final float REST = 0.8f, MAGNIFIED = 1.3f, NEAR = 1.08f;
     /** Design size of a tile (dp); tiles shrink from here when the columns don't fit, see tileWidthPx. */
     static final float DESIGN_W_DP = 180f, DESIGN_H_DP = 101f;
 
@@ -97,7 +104,8 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         if (innerWidthPx <= 0 || columns <= 0) return design;
         int cell = innerWidthPx / columns;
         int fit = (int) ((cell - 12 * density) / FOCUS_SCALE);
-        return Math.max(Math.round(80 * density), Math.min(design, fit));
+        int width = Math.max(Math.round(80 * density), Math.min(design, fit));
+        return magnify ? Math.round(width * REST) : width;
     }
 
     static int tileHeightPx(int tileWidthPx) {
@@ -349,6 +357,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     }
 
     float focusScale() {
+        if (magnify) return MAGNIFIED;
         return !animations ? 1f : advancedEffects ? 1.12f : 1.10f;
     }
 
@@ -462,6 +471,12 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
                     banner.setScaleY(1f);
                     name.setAlpha(focused ? 1f : 0f);
                     name.setTranslationY(0f);
+                } else if (magnify) {
+                    // CompactHome scales the row; the name drops clear of the grown tile.
+                    float grown = view.getHeight() * (MAGNIFIED - 1f) / 2f;
+                    name.animate().alpha(focused ? 1f : 0f)
+                            .translationY(focused ? grown + density * 2f : -density * 6f)
+                            .setDuration(220).start();
                 } else if (reducedMotion) {
                     view.animate().scaleX(s).scaleY(s)
                             .translationY(focused && advancedEffects ? -4f * density : 0f)

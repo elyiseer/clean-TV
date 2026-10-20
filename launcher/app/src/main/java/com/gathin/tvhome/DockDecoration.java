@@ -19,9 +19,14 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
     private final RectF rect = new RectF();
 
     DockDecoration(int dockSize, float density) {
+        this(dockSize, density, false);
+    }
+
+    /** seeThrough (compact_ui): the band at 60%, so a wallpaper or the backdrop shows through it. */
+    DockDecoration(int dockSize, float density, boolean seeThrough) {
         this.dockSize = dockSize;
         this.density = density;
-        band.setColor(0xFF141416);
+        band.setColor(seeThrough ? 0x99141416 : 0xFF141416);
         edge.setStyle(Paint.Style.STROKE);
         edge.setStrokeWidth(density);
         edge.setColor(0x1FFFFFFF);

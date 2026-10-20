@@ -126,6 +126,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean moduleCards;
     /** Calmer motion for weak GPUs (config.xml, reduced_motion): stiff spring, short fades, no replay. */
     private boolean reducedMotion;
+    /** compact_ui (CompactHome): null when off. */
+    private boolean compactUi;
+    private CompactHome compact;
     /** Festive skin from the theme (see Festival); applied while it is active today. */
     private Festival festival = Festival.NONE;
     private boolean festive;
@@ -216,6 +219,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         animations = cfg.animations;
         advancedEffects = cfg.animations && cfg.advancedEffects;
         reducedMotion = cfg.reducedMotion;
+        compactUi = cfg.compactUi;
+        AppAdapter.magnify = compactUi && animations && !reducedMotion;
         festival = cfg.festival;
         festive = festival.active(LocalDate.now());
         liveTvPkg = cfg.liveTvPackage;
@@ -289,7 +294,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         grid.setHasFixedSize(true);
         grid.setItemAnimator(null);
-        grid.addItemDecoration(new DockDecoration(COLUMNS, density));
+        grid.addItemDecoration(new DockDecoration(COLUMNS, density, compactUi));
         if (animations) {
             int enterAnim = reducedMotion ? R.anim.tile_enter_reduced : R.anim.tile_enter;
             float enterDelay = reducedMotion ? 0f : 0.06f;
@@ -370,7 +375,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         boolean rtlMenuBar = getResources().getBoolean(R.bool.rtl_menu_bar);
         View.OnKeyListener pillKeys = (v, keyCode, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
-            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) return true;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                // compact_ui: nothing above the bar, so Up slides the dock away to show the background.
+                if (compact != null) {
+                    hideHero();
+                    compact.setDockHidden(true);
+                }
+                return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && compact != null && compact.dockHidden()) {
+                compact.setDockHidden(false);   // the next Down moves into it as usual
+                return true;
+            }
             if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
                 // Back to the dock tile Up came from, not wherever the focus finder lands.
                 focusTile(lastFocused % COLUMNS);
@@ -394,10 +410,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         if (festive) applyFestiveSkin((TextView) btnInputs, (TextView) btnSettings);
 
+        if (compactUi) {
+            CompactHome.applyHeader(this);
+            compact = new CompactHome(grid, new View[] {grid, findViewById(R.id.topButtons), heroName, glass, ambient},
+                    handler, reducedMotion);
+        }
+
         // Hide the glass when focus leaves the tiles.
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> {
             boolean onTile = newF != null && newF.getId() == R.id.card;
-            if (!onTile) hideGlass();
+            if (!onTile) {
+                hideGlass();
+                if (compact != null) compact.magnify(-1, COLUMNS);
+            }
         });
 
         packageFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
@@ -491,6 +516,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onResume() {
         super.onResume();
+        if (compact != null) compact.onResume();
         // A festival that started or ended while Home was in the background: rebuild with or without it.
         if (festive != festival.active(LocalDate.now())) {
             recreate();
@@ -588,6 +614,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onPause() {
         super.onPause();
+        if (compact != null) compact.onPause();
         stopAmbientAnimation();
         heroName.animate().cancel();
         ambient.animate().cancel();
@@ -625,7 +652,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     public void onBackPressed() {
-        // Home screen: Back goes nowhere.
+        // Home screen: Back goes nowhere, except to bring a dock slid away (compact_ui) back.
+        if (compact != null && compact.dockHidden()) compact.setDockHidden(false);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        // compact_ui: any key restarts the idle countdown, and the first one on an idle Home only wakes it.
+        if (compact != null && compact.onKey(event)) return true;
+        return super.dispatchKeyEvent(event);
     }
 
     // ---- glass highlight -------------------------------------------------------------------------
@@ -633,6 +668,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     public void onTileFocused(int position, View card) {
         lastFocused = position;
+        if (compact != null) compact.magnify(position, COLUMNS);
         lastFocusedKey = adapter.keyAt(position);
         // Tile rect in root coordinates, using layout positions (ignores the scale animation).
         Rect r = new Rect(0, 0, card.getWidth(), card.getHeight());
@@ -959,6 +995,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         } catch (Exception ignored) {
         }
+        // compact_ui: online, the icon says Wi-Fi or Ethernet; only "Offline" is spelled out.
+        if (compactUi && online) text = "";
         // With a VPN app configured, a VPN that is down matters too: show a red "VPN off" capsule then.
         boolean vpnDown = !vpn && online && !vpnApp.isEmpty();
         if (vpn || vpnDown) {
@@ -972,11 +1010,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             float room = btnWifi.getMaxWidth() - btnWifi.getTotalPaddingStart() - btnWifi.getTotalPaddingEnd()
                     - span.getSize(paint, badge, 0, badge.length(), null) - paint.measureText(" ") - 2 * density;
             text = TextUtils.ellipsize(text, paint, Math.max(0, room), TextUtils.TruncateAt.END).toString();
-            SpannableString label = new SpannableString(text + " " + badge);
-            label.setSpan(span, text.length() + 1, label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            // A replacement span alone on a line gets no font metrics and isn't drawn: lead with a zero-width space.
+            String lead = text.isEmpty() ? "\u200B" : text + " ";
+            SpannableString label = new SpannableString(lead + badge);
+            label.setSpan(span, lead.length(), label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             btnWifi.setText(label);
         } else {
             btnWifi.setText(text);
+        }
+        if (compactUi) {
+            // No name: no gap after the icon (the VPN tag has its own margin), and even padding.
+            boolean named = !text.isEmpty();
+            btnWifi.setCompoundDrawablePadding(named ? Math.round(9 * density) : 0);
+            int start = Math.round(14 * density), end = Math.round((named && !vpn && !vpnDown ? 20 : 14) * density);
+            btnWifi.setPaddingRelative(start, btnWifi.getPaddingTop(), end, btnWifi.getPaddingBottom());
         }
         if (festive && diya != null) {
             if (online && flame == 0) flame = 3;   // online some other way (cellular, USB tethering)
