@@ -40,8 +40,10 @@ Back up first
   is on, so warn me, and remind me to switch debugging off once you're done.
 - When you finish, close network ADB instead of leaving it open: switch USB debugging and
   Network/ADB debugging off on the TV, revoke the USB debugging authorisations, reboot, and check
-  that `nc -vz <tv ip> 5555` fails. Port 5555 is plaintext, and on firmware with `ro.adb.secure=0`
-  any device on the LAN can get a shell.
+  with `tools/adb-closed.py <tv ip>` that the port refuses the connection. Don't trust `nc` on macOS:
+  Local Network privacy can block it too, and its "No route to host" proves nothing; only "Connection
+  refused" does. Port 5555 is plaintext, and on firmware with `ro.adb.secure=0` any device on the LAN
+  can get a shell.
 
 Debloat
 - List installed packages and sort them into: manufacturer telemetry/analytics, manufacturer content
