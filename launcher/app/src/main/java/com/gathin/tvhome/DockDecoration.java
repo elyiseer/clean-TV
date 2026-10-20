@@ -18,14 +18,23 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
     private final Paint edge = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rect = new RectF();
 
-    /** @param translucent the cinematic shelf's band: the artwork and the glow show through it. */
-    DockDecoration(int dockSize, float density, boolean translucent) {
+    /**
+     * @param glassEnabled translucent band so wallpaper/glow show through; when false the band is opaque
+     * @param opacityPercent band alpha 10–90 when glass is on (ignored when glass is off)
+     */
+    DockDecoration(int dockSize, float density, boolean glassEnabled, int opacityPercent) {
         this.dockSize = dockSize;
         this.density = density;
-        band.setColor(translucent ? 0x8C121014 : 0xFF141416);
+        if (glassEnabled) {
+            int alpha = Config.clampDockGlassOpacity(opacityPercent) * 255 / 100;
+            band.setColor((alpha << 24) | 0x00121014);
+            edge.setColor(0x26FFFFFF);
+        } else {
+            band.setColor(0xFF141416);
+            edge.setColor(0x1FFFFFFF);
+        }
         edge.setStyle(Paint.Style.STROKE);
         edge.setStrokeWidth(density);
-        edge.setColor(translucent ? 0x26FFFFFF : 0x1FFFFFFF);
     }
 
     @Override

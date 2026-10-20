@@ -89,6 +89,11 @@ import java.util.Set;
 public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private static final int LAUNCHER_SETTINGS_REQUEST = 42;
+    private static final String FIRE_TV_LAUNCHER = "com.amazon.tv.launcher";
+    private static final ComponentName FIRE_TV_SETTINGS =
+            new ComponentName(FIRE_TV_LAUNCHER, "com.amazon.tv.launcher.ui.MainSettingsActivity");
+    private static final ComponentName ANDROID_TV_SETTINGS =
+            new ComponentName("com.android.tv.settings", "com.android.tv.settings.MainSettings");
     /** Sent by QuickSettingsActivity: open Launcher settings from here so Home rebuilds when they close. */
     static final String ACTION_LAUNCHER_SETTINGS = "com.gathin.tvhome.action.LAUNCHER_SETTINGS";
     /** Tiles per row and dock slots (res/values/config.xml, columns). Set in onCreate. */
@@ -115,6 +120,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private LinearLayout heroDots;
     /** Cinematic top shelf (config.xml, cinematic_home): the focused dock app's artwork behind a larger shelf. */
     private boolean cinematic;
+    /** When false, focus glow stays neutral white instead of the app's accent colour. */
+    private boolean ambientTint;
     private ImageView heroArt;
     private static final float HERO_ART_ALPHA = 0.5f;
     /** Softened artwork per app (HeroArt, about 5 KB each), made the first time its dock tile is focused. */
@@ -130,7 +137,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean advancedEffects;
     private TextView greeting;
     private View btnInputs;
+    private View btnSettings;
     private TextView btnWifi;
+    private int backgroundColor;
     private TextView shamsiDate;
     private TextView stats;
     private List<RaceWeekend.Race> raceCalendar;
@@ -263,7 +272,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             updateRace();
             updateWifiLabel();
             sky.update();
-            wallpaperPlayer.update();
             handler.postDelayed(this, MINUTE_MS);
         }
     };
@@ -291,7 +299,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         sourcePanelAction = cfg.sourcePanelAction;
 
         root = findViewById(R.id.root);
-        root.setBackgroundColor(cfg.backgroundColor);
+        backgroundColor = cfg.backgroundColor;
+        root.setBackgroundColor(backgroundColor);
         wallpaperPlayer = new WallpaperPlayer(this, root, cfg);
         sky = findViewById(R.id.sky);
         sky.setIntensity(cfg.skyIntensity);
@@ -310,6 +319,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         heroDots = findViewById(R.id.heroDots);
         heroArt = findViewById(R.id.heroArt);
         cinematic = cfg.cinematicHome;
+        ambientTint = cfg.ambientTint;
         if (cinematic) setUpCinematicShelf();
         // dock_title false: the name above the dock (and the cinematic lines under it) never shows; the glow
         // still follows the dock.
@@ -393,7 +403,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             public void onChildViewDetachedFromWindow(@NonNull View v) {
             }
         });
-        if (dockRow) grid.addItemDecoration(new DockDecoration(COLUMNS, density, cinematic));
+        if (dockRow) grid.addItemDecoration(
+                new DockDecoration(COLUMNS, density, cfg.dockGlass, cfg.dockGlassOpacity));
         if (animations) {
             int enterAnim = reducedMotion ? R.anim.tile_enter_reduced : R.anim.tile_enter;
             float enterDelay = reducedMotion ? 0f : 0.06f;
@@ -471,14 +482,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
 
         btnInputs = findViewById(R.id.btnInputs);
-        View btnSettings = findViewById(R.id.btnSettings);
+        btnSettings = findViewById(R.id.btnSettings);
         btnInputs.setOnClickListener(v -> showInputs());
         btnWifi.setOnClickListener(v -> openNetworkPill());
         btnWifi.setOnLongClickListener(v -> {
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
             return true;
         });
-        btnSettings.setOnClickListener(v -> open(systemIntent(Settings.ACTION_SETTINGS)));
+        btnSettings.setOnClickListener(v -> open(settingsIntent()));
         btnReorder = findViewById(R.id.btnReorder);
         btnReorder.setOnClickListener(v -> toggleReorder());
         btnReorder.setVisibility(cfg.reorderButton ? View.VISIBLE : View.GONE);
@@ -747,8 +758,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         for (int code : settingsKeycodes) {
             if (event.getKeyCode() != code) continue;
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
-                open(settingsKeyPanel ? new Intent(this, QuickSettingsActivity.class)
-                        : systemIntent(Settings.ACTION_SETTINGS));
+                open(settingsKeyPanel ? new Intent(this, QuickSettingsActivity.class) : settingsIntent());
             }
             return true;
         }
@@ -1025,6 +1035,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     // ---- glass highlight -------------------------------------------------------------------------
 
     @Override
+    public void onTileLongPress(int position) {
+        if (reordering || openPopup != null || appLibrary != null) return;
+        if (position < 0 || position >= adapter.movableCount()) return;
+        if (!beginReorder()) return;
+        pickUp(position);
+        focusTile(position);
+        Toast.makeText(this, R.string.reorder_hint, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
     public void onLibraryRequested() {
         if (appLibrary != null) appLibrary.close();
         if (openPopup != null) openPopup.dismiss();
@@ -1075,8 +1095,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glassCardW = card.getWidth();
         glassTargetX = x;
         glassTargetY = y;
-        // Cinematic shelf: the highlight glows in the dock app's colour, plain white in the grid.
-        int accent = cinematic && !festive && position < COLUMNS ? adapter.ambientColorAt(position) : 0;
+        // Cinematic shelf: the highlight glows in the dock app's colour, plain white in the grid
+        // (or always white when App color glow is off).
+        int accent = cinematic && !festive && ambientTint && position < COLUMNS
+                ? adapter.ambientColorAt(position) : 0;
         if (cinematic && !festive && accent != glassAccent) {
             glassAccent = accent;
             glass.setAccent(accent);
@@ -1141,7 +1163,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void showHero(int position, float dockTopInRoot) {
         String label = adapter.labelAt(position);
-        int color = adapter.ambientColorAt(position);
+        int color = ambientDisplayColor(adapter.ambientColorAt(position));
         float y = dockTopInRoot - 14 * density - 26 * density - hero.getHeight();
         boolean changed = !label.contentEquals(heroName.getText());
         if (cinematic) showHeroArt(position);
@@ -1329,6 +1351,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * over the screen is one texture. It is painted once in white and tinted with the app's colour,
      * so changing apps neither repaints it on the CPU (about 11 ms) nor uploads it again.
      */
+    /** App accent when ambient tint is on; neutral white when the user turned App color glow off. */
+    private int ambientDisplayColor(int appColor) {
+        return ambientTint ? appColor : 0xFFFFFF;
+    }
+
     private void setAmbient(int color) {
         if (color == ambientColor && ambient.getBackground() != null) return;
         ambientColor = color;
@@ -1391,7 +1418,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * show (every tile has its name underneath).
      */
     private void showGlowOnly(int position) {
-        int color = adapter.ambientColorAt(position);
+        int color = ambientDisplayColor(adapter.ambientColorAt(position));
         stopAmbientAnimation();
         hero.animate().cancel();
         ambient.animate().cancel();
@@ -1969,6 +1996,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
 
+    /** True when Amazon's home still claims CATEGORY_HOME (Fire OS). */
+    private boolean isFireTv() {
+        return getPackageManager().resolveActivity(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setPackage(FIRE_TV_LAUNCHER),
+                0) != null;
+    }
+
+    /**
+     * Fire TV: Amazon's MainSettingsActivity (ACTION_SETTINGS often does nothing there).
+     * Android TV / TCL: com.android.tv.settings.MainSettings when present.
+     * Else standard Settings, then Xiaomi fallback.
+     */
+    private Intent settingsIntent() {
+        if (isFireTv()) {
+            Intent fire = new Intent().setComponent(FIRE_TV_SETTINGS);
+            if (fire.resolveActivity(getPackageManager()) != null) return fire;
+        }
+        Intent tv = new Intent().setComponent(ANDROID_TV_SETTINGS);
+        if (tv.resolveActivity(getPackageManager()) != null) return tv;
+        return systemIntent(Settings.ACTION_SETTINGS);
+    }
+
     /**
      * China-market MIUI TV firmware answers no standard Settings intents at all; open Xiaomi's own
      * settings app (com.xiaomi.mitv.settings) there, so the Settings and Wi-Fi pills keep working.
@@ -1977,6 +2026,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private Intent systemIntent(String standardAction) {
         Intent i = new Intent(standardAction);
         if (i.resolveActivity(getPackageManager()) != null) return i;
+        if (Settings.ACTION_SETTINGS.equals(standardAction)) {
+            Intent tv = new Intent().setComponent(ANDROID_TV_SETTINGS);
+            if (tv.resolveActivity(getPackageManager()) != null) return tv;
+        }
         i = new Intent().setComponent(new ComponentName(
                 "com.xiaomi.mitv.settings", "com.xiaomi.mitv.settings.entry.MainActivity"));
         if (i.resolveActivity(getPackageManager()) != null) return i;
@@ -2026,10 +2079,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void open(Intent i) {
+        if (i == null) {
+            Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+            return;
+        }
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             startActivity(i);
-        } catch (ActivityNotFoundException e) {
+        } catch (ActivityNotFoundException | SecurityException e) {
             Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
         }
     }

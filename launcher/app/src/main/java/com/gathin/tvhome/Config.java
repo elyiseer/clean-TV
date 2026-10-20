@@ -36,8 +36,23 @@ final class Config {
     static final String SETTINGS_NAME = "launcher_settings";
     static final String ROWS_BELOW_DOCK_KEY = "rows_below_dock";
     static final String WALLPAPER_CHOICE_KEY = "wallpaper_choice";
+    /** On-TV override in seconds; absent = follow theme / multi-image fallback. */
+    static final String WALLPAPER_ROTATION_KEY = "wallpaper_rotation_seconds";
+    /** Pref antiga em minutos; migrada para {@link #WALLPAPER_ROTATION_KEY} na carga. */
+    private static final String WALLPAPER_ROTATION_MINUTES_LEGACY = "wallpaper_rotation_minutes";
+    /** Teto: 24 h. */
+    static final int MAX_ROTATION_SECONDS = 24 * 60 * 60;
+    /** none | crossfade */
+    static final String WALLPAPER_TRANSITION_KEY = "wallpaper_transition";
+    static final int WALLPAPER_TRANSITION_MS_DEFAULT = 500;
+    static final String AMBIENT_TINT_KEY = "ambient_tint";
+    static final String DOCK_GLASS_KEY = "dock_glass";
+    static final String DOCK_GLASS_OPACITY_KEY = "dock_glass_opacity";
     private static final String THEME_REVISION_NAME = "theme_revision";
     private static final String THEME_SIGNATURE_KEY = "theme_signature";
+    static final String TRANSITION_NONE = "none";
+    static final String TRANSITION_CROSSFADE = "crossfade";
+    static final int DOCK_GLASS_OPACITY_DEFAULT = 55;
 
     final List<String> dockApps;
     /** Grid apps fill the dock slots dock_apps leaves free (config.xml, fill_dock); on by default, false leaves the slots empty. */
@@ -94,8 +109,19 @@ final class Config {
     final File wallpaper;
     /** Rotating theme images, or the single wallpaper when no collection is configured. */
     final List<File> wallpapers;
-    final int wallpaperRotationMinutes;
+    /** Intervalo de rotação em segundos (0 = sem rotação por tempo). */
+    final int wallpaperRotationSeconds;
     final int wallpaperDim;
+    /** On-TV wallpaper swap effect: none or crossfade. */
+    final String wallpaperTransition;
+    /** Duração fixa do crossfade (ms); ignorada quando transition é none. */
+    final int wallpaperTransitionMs;
+    /** When false, dock focus keeps a neutral white glow instead of the app's accent colour. */
+    final boolean ambientTint;
+    /** Translucent dock band; when false the band is opaque even on the cinematic shelf. */
+    final boolean dockGlass;
+    /** Dock glass band alpha as percent 10–90 (ignored when dockGlass is false). */
+    final int dockGlassOpacity;
     /** Whether the overlay file was present and parsed. */
     final boolean overlayApplied;
     /** Festive skin from a theme (festival, festival_until, greeting, accent_color); {@link Festival#NONE} if none. */
@@ -112,7 +138,9 @@ final class Config {
                    boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean dockTitle, boolean dockRow, boolean reorderButton, String vpnApp,
                    boolean showHomeSettingsShortcut, boolean showStats, boolean appLibrary, int backgroundColor, int skyIntensity,
                    int[] settingsKeycodes, boolean settingsKeyPanel, boolean wallpaperEnabled, File wallpaper, List<File> wallpapers,
-                   int wallpaperRotationMinutes, int wallpaperDim, boolean overlayApplied,
+                   int wallpaperRotationSeconds, int wallpaperDim, String wallpaperTransition,
+                   int wallpaperTransitionMs, boolean ambientTint,
+                   boolean dockGlass, int dockGlassOpacity, boolean overlayApplied,
                    Festival festival, int[] inputKeycodes, List<String> appKeys,
                    List<RaceWeekend.Race> raceCalendar, boolean cinematicHome) {
         this.inputKeycodes = inputKeycodes;
@@ -150,12 +178,38 @@ final class Config {
         this.wallpaperEnabled = wallpaperEnabled;
         this.wallpaper = wallpaper;
         this.wallpapers = Collections.unmodifiableList(wallpapers);
-        this.wallpaperRotationMinutes = wallpaperRotationMinutes;
+        this.wallpaperRotationSeconds = wallpaperRotationSeconds;
         this.wallpaperDim = wallpaperDim;
+        this.wallpaperTransition = wallpaperTransition;
+        this.wallpaperTransitionMs = wallpaperTransitionMs;
+        this.ambientTint = ambientTint;
+        this.dockGlass = dockGlass;
+        this.dockGlassOpacity = dockGlassOpacity;
         this.overlayApplied = overlayApplied;
         this.festival = festival;
         this.raceCalendar = Collections.unmodifiableList(raceCalendar);
         this.cinematicHome = cinematicHome;
+    }
+
+    /** URL / Bing land in {@link WallpaperUrls}' on-device cache. */
+    static boolean isCachedWallpaperChoice(String choice) {
+        return WallpaperUrls.CHOICE.equals(choice)
+                || BingWallpaper.CHOICE.equals(choice);
+    }
+
+    static int clampRotationSeconds(int value) {
+        return value < 0 ? 0 : Math.min(MAX_ROTATION_SECONDS, value);
+    }
+
+    static int clampDockGlassOpacity(int value) {
+        if (value < 10) return 10;
+        if (value > 90) return 90;
+        return value;
+    }
+
+    static String normalizeWallpaperTransition(String value) {
+        if (TRANSITION_CROSSFADE.equals(value)) return value;
+        return TRANSITION_NONE;
     }
 
     /** The folder the theme tools push into; null when external storage is unavailable. */
@@ -254,10 +308,17 @@ final class Config {
         // A theme can also switch the wallpaper off while the file is still there.
         boolean wallpaperEnabled = json == null || bool(json, "wallpaper", true);
         if (!wallpaperEnabled) wallpaper = null;
-        int rotationMinutes = json == null ? 0 : integer(json, "wallpaper_rotation_minutes", 0, 0, 1440);
+        int themeRotationSeconds = json == null ? 0
+                : integer(json, "wallpaper_rotation_minutes", 0, 0, 1440) * 60;
+        migrateRotationPref(choices);
+        boolean rotationPrefSet = choices.contains(WALLPAPER_ROTATION_KEY);
+        // Pref first so a positive on-TV interval also loads the theme's wallpapers/ folder.
+        int rotationSeconds = rotationPrefSet
+                ? clampRotationSeconds(choices.getInt(WALLPAPER_ROTATION_KEY, 0))
+                : themeRotationSeconds;
         int wallpaperDim = json == null ? 0 : integer(json, "wallpaper_dim", 0, 0, 90);
         List<File> wallpapers = new ArrayList<>();
-        if (rotationMinutes > 0 && dir != null && wallpaperEnabled) {
+        if (rotationSeconds > 0 && dir != null && wallpaperEnabled) {
             wallpapers.addAll(WallpaperRotation.images(new File(dir, "wallpapers")));
         }
         if (wallpapers.isEmpty() && wallpaper != null) wallpapers.add(wallpaper);
@@ -268,6 +329,17 @@ final class Config {
             wallpapers.clear();
             wallpaper = null;
             wallpaperEnabled = false;
+        } else if (isCachedWallpaperChoice(wallpaperChoice)) {
+            // URL / Bing: land in WallpaperUrls' on-device cache.
+            WallpaperUrls.prune(ctx);
+            wallpapers.clear();
+            wallpapers.addAll(WallpaperUrls.cachedFiles(ctx));
+            wallpaper = wallpapers.isEmpty() ? null : wallpapers.get(0);
+            wallpaperEnabled = !wallpapers.isEmpty();
+            // Multi-image fallback only when the theme left rotation at 0 and the TV pref is unset.
+            if (wallpapers.size() > 1 && themeRotationSeconds == 0 && !rotationPrefSet) {
+                rotationSeconds = 30 * 60;
+            }
         } else if (wallpaperChoice != null && dir != null) {
             File picked = WallpaperRotation.find(
                     WallpaperRotation.images(new File(dir, "wallpapers")), wallpaperChoice);
@@ -280,6 +352,13 @@ final class Config {
                 wallpaperEnabled = true;
             }
         }
+        String wallpaperTransition = normalizeWallpaperTransition(
+                choices.getString(WALLPAPER_TRANSITION_KEY, TRANSITION_NONE));
+        int wallpaperTransitionMs = WALLPAPER_TRANSITION_MS_DEFAULT;
+        boolean ambientTint = choices.getBoolean(AMBIENT_TINT_KEY, true);
+        boolean dockGlass = choices.getBoolean(DOCK_GLASS_KEY, false);
+        int dockGlassOpacity = clampDockGlassOpacity(
+                choices.getInt(DOCK_GLASS_OPACITY_KEY, DOCK_GLASS_OPACITY_DEFAULT));
         // A festive skin comes only from a theme; config.xml has no festival.
         Festival festival = json == null ? Festival.NONE : Festival.parse(string(json, "festival", ""),
                 string(json, "festival_until", ""), string(json, "greeting", ""), string(json, "accent_color", ""));
@@ -290,8 +369,10 @@ final class Config {
                 Math.max(1, columns), Math.max(0, rowsBelow), animations, advancedEffects,
                 shamsi, greetingName, moduleCards, reducedMotion, dockTitle, dockRow, reorderButton, vpn, homeSettings, showStats, library, background,
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, wallpaperEnabled, wallpaper,
-                wallpapers, rotationMinutes, wallpaperDim, applied,
-                festival, inputKeycodes, appKeys, json == null ? Collections.emptyList() : raceCalendar(json), cinematic);
+                wallpapers, rotationSeconds, wallpaperDim, wallpaperTransition, wallpaperTransitionMs,
+                ambientTint, dockGlass, dockGlassOpacity,
+                applied, festival, inputKeycodes, appKeys,
+                json == null ? Collections.emptyList() : raceCalendar(json), cinematic);
     }
 
     /**
@@ -333,14 +414,34 @@ final class Config {
             // Existing preferences survive an app upgrade, unless the first launch follows an
             // explicit theme push or reset by the updated tools.
             SharedPreferences.Editor editor = choices.edit();
-            if (!"absent".equals(token)) editor.remove("columns").remove("animations")
-                    .remove("advanced_effects").remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY);
+            if (!"absent".equals(token)) clearOnTvChoices(editor);
             editor.putString(THEME_SIGNATURE_KEY, signature).commit();
         } else if (!seen.equals(signature)) {
-            choices.edit().remove("columns").remove("animations").remove("advanced_effects")
-                    .remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY)
+            clearOnTvChoices(choices.edit())
                     .putString(THEME_SIGNATURE_KEY, signature).commit();
         }
+    }
+
+    /** Keys the settings screen and theme sync clear together (Follow theme / theme push). */
+    static SharedPreferences.Editor clearOnTvChoices(SharedPreferences.Editor editor) {
+        return editor.remove("columns").remove("animations").remove("advanced_effects")
+                .remove(ROWS_BELOW_DOCK_KEY).remove(WALLPAPER_CHOICE_KEY)
+                .remove(WALLPAPER_ROTATION_KEY).remove(WALLPAPER_ROTATION_MINUTES_LEGACY)
+                .remove(WALLPAPER_TRANSITION_KEY)
+                .remove(AMBIENT_TINT_KEY).remove(DOCK_GLASS_KEY).remove(DOCK_GLASS_OPACITY_KEY)
+                .remove(WallpaperUrls.URLS_KEY);
+    }
+
+    /** Converte pref antiga em minutos para segundos (uma vez). */
+    private static void migrateRotationPref(SharedPreferences choices) {
+        if (choices.contains(WALLPAPER_ROTATION_KEY) || !choices.contains(WALLPAPER_ROTATION_MINUTES_LEGACY)) {
+            return;
+        }
+        int minutes = choices.getInt(WALLPAPER_ROTATION_MINUTES_LEGACY, 0);
+        choices.edit()
+                .putInt(WALLPAPER_ROTATION_KEY, clampRotationSeconds(minutes * 60))
+                .remove(WALLPAPER_ROTATION_MINUTES_LEGACY)
+                .apply();
     }
 
     private static String fileStamp(File file) {

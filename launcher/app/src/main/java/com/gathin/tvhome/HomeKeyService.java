@@ -1,6 +1,7 @@
 package com.gathin.tvhome;
 
 import android.accessibilityservice.AccessibilityService;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.provider.Settings;
 import android.view.KeyEvent;
@@ -14,11 +15,20 @@ import java.util.Map;
  * (Xiaomi sticks and boxes). Android TV 9 routes that key only to the system-image launcher, so once
  * the stock launcher is disabled the button does nothing. Every other key passes through untouched.
  *
+ * On Fire TV the stock launcher (com.amazon.tv.launcher) cannot be disabled and keeps answering the Home
+ * button, so this service also takes KEYCODE_HOME there and sends the user back here whenever the
+ * Amazon launcher comes to the front.
+ *
  * Enable over adb:
  *   settings put secure enabled_accessibility_services com.gathin.tvhome/.HomeKeyService
  *   settings put secure accessibility_enabled 1
  */
 public class HomeKeyService extends AccessibilityService {
+
+    /** Fire OS home screen that can't be disabled; when it comes to the front, this launcher replaces it. */
+    private static final String FIRE_TV_LAUNCHER = "com.amazon.tv.launcher";
+    private static final ComponentName FIRE_TV_SETTINGS =
+            new ComponentName("com.amazon.tv.launcher", "com.amazon.tv.launcher.ui.MainSettingsActivity");
 
     /** Remote buttons that should open Settings (config.xml, settings_key_scancodes and settings_key_keycodes). */
     private int[] settingsScancodes = new int[0];
@@ -26,6 +36,7 @@ public class HomeKeyService extends AccessibilityService {
     private boolean settingsPanel;
     /** app_keys, the same map InputKeyService reads, for setups that run only this service. */
     private Map<Integer, String> appKeys = Collections.emptyMap();
+    private boolean fireTv;
 
     @Override
     protected void onServiceConnected() {
@@ -36,6 +47,8 @@ public class HomeKeyService extends AccessibilityService {
         settingsKeycodes = config.settingsKeycodes;
         settingsPanel = config.settingsKeyPanel;
         appKeys = RemoteKeys.parseAppKeys(config.appKeys);
+        fireTv = getPackageManager().resolveActivity(new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME).setPackage(FIRE_TV_LAUNCHER), 0) != null;
     }
 
     private boolean isSettingsKey(KeyEvent event) {
@@ -51,7 +64,7 @@ public class HomeKeyService extends AccessibilityService {
         if (isSettingsKey(event)) {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
                 Intent open = settingsPanel ? new Intent(this, QuickSettingsActivity.class)
-                        : new Intent(Settings.ACTION_SETTINGS);
+                        : fireTv ? new Intent().setComponent(FIRE_TV_SETTINGS) : new Intent(Settings.ACTION_SETTINGS);
                 startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             }
             return true;
@@ -61,19 +74,29 @@ public class HomeKeyService extends AccessibilityService {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) RemoteKeys.launch(this, app);
             return true;
         }
-        if (event.getKeyCode() != KeyEvent.KEYCODE_ALL_APPS) return false;
-        if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
-            Intent home = new Intent(Intent.ACTION_MAIN)
-                    .addCategory(Intent.CATEGORY_HOME)
-                    .setPackage(getPackageName())
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-            startActivity(home);
-        }
+        boolean fireHome = event.getKeyCode() == KeyEvent.KEYCODE_HOME && fireTv;
+        if (event.getKeyCode() != KeyEvent.KEYCODE_ALL_APPS && !fireHome) return false;
+        if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) goHome();
         return true;
+    }
+
+    private void goHome() {
+        Intent home = new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME)
+                .setPackage(getPackageName())
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        startActivity(home);
     }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+        // Fire OS still opens its own home screen (after boot, from its menus); swap it for this one. Its settings
+        // screens are a different class and stay open.
+        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+                && FIRE_TV_LAUNCHER.contentEquals(String.valueOf(event.getPackageName()))
+                && String.valueOf(event.getClassName()).contains("HomeActivity")) {
+            goHome();
+        }
     }
 
     @Override
