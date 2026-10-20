@@ -18,6 +18,19 @@
     <!-- Android 11+ package visibility: lets the launcher list the TV apps it shows as tiles, and the
          apps that declare a module card (docs/specs/card.md). -->
     <queries>
+        <!-- 查询标准设置处理程序，避免包可见性限制导致误用厂商回退入口。 -->
+        <intent>
+            <action android:name="android.settings.SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.WIFI_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.DISPLAY_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.MANAGE_APPLICATIONS_SETTINGS" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
@@ -32,6 +45,7 @@
         </intent>
         <!-- China-market MIUI TV firmware: the Settings and Wi-Fi pills fall back to Xiaomi's settings app. -->
         <package android:name="com.xiaomi.mitv.settings" />
+        <package android:name="com.tcl.settings" />
     </queries>
 
     <application

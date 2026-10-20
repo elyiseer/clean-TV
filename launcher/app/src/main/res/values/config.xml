@@ -7,6 +7,12 @@
 -->
 <resources>
 
+    <!-- 标准设置入口不可用时依次尝试；对应包也须在 Manifest 的 queries 中可见。 -->
+    <string-array name="settings_fallback_components" translatable="false">
+        <item>com.xiaomi.mitv.settings/com.xiaomi.mitv.settings.entry.MainActivity</item>
+        <item>com.tcl.settings/com.tcl.settings.ui.MainActivity</item>
+    </string-array>
+
     <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
     <string-array name="dock_apps">
         <item>com.netflix.ninja</item>
