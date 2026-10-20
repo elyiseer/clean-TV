@@ -58,4 +58,5 @@
     <string name="on">Wł.</string>
     <string name="off">Wył.</string>
     <string name="enable">Włącz</string>
+    <string name="gallery_state">Galeria: %1$s</string>
 </resources>

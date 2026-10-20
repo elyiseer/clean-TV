@@ -31,4 +31,5 @@
     <string name="on">Activat</string>
     <string name="off">Desactivat</string>
     <string name="enable">Activa</string>
+    <string name="gallery_state">Galeria: %1$s</string>
 </resources>

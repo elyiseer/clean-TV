@@ -64,4 +64,5 @@
     <string name="card_state_new">New</string>
     <string name="card_state_new_key">New key</string>
     <string name="card_state_new_label">New name</string>
+    <string name="gallery_state">Gallery: %1$s</string>
 </resources>

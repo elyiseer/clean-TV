@@ -32,4 +32,5 @@
     <string name="on">Sí</string>
     <string name="off">No</string>
     <string name="enable">Activar</string>
+    <string name="gallery_state">Galería: %1$s</string>
 </resources>

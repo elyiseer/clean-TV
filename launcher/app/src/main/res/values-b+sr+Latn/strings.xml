@@ -39,4 +39,5 @@
     <string name="on">Uklj.</string>
     <string name="off">Isklj.</string>
     <string name="enable">Uključi</string>
+    <string name="gallery_state">Galerija: %1$s</string>
 </resources>

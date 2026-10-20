@@ -17,10 +17,12 @@ public final class LauncherSettingsActivity extends Activity {
     private final TextView[] columnChoices = new TextView[4];
     private TextView animationsChoice;
     private TextView advancedChoice;
+    private TextView galleryChoice;
     private TextView followThemeChoice;
     private int columns;
     private boolean animations;
     private boolean advancedEffects;
+    private boolean gallery;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -31,6 +33,7 @@ public final class LauncherSettingsActivity extends Activity {
         columns = config.columns;
         animations = config.animations;
         advancedEffects = config.animations && config.advancedEffects;
+        gallery = config.gallery;
 
         int[] ids = {R.id.columns4, R.id.columns5, R.id.columns6, R.id.columns7};
         for (int i = 0; i < ids.length; i++) {
@@ -73,14 +76,24 @@ public final class LauncherSettingsActivity extends Activity {
                         .show();
             }
         });
+        // Gallery: the photos and videos in Pictures/Launcher as the background (Gallery.java). Home asks
+        // for permission to read them the first time it is on.
+        galleryChoice = findViewById(R.id.galleryChoice);
+        galleryChoice.setOnClickListener(v -> {
+            gallery = !gallery;
+            choices.edit().putBoolean("gallery", gallery).apply();
+            setResult(RESULT_OK);
+            refresh();
+        });
         followThemeChoice = findViewById(R.id.followThemeChoice);
         followThemeChoice.setOnClickListener(v -> {
             if (!hasOnTvChoices()) return;
-            choices.edit().remove("columns").remove("animations").remove("advanced_effects").commit();
+            choices.edit().remove("columns").remove("animations").remove("advanced_effects").remove("gallery").commit();
             Config current = Config.load(this);
             columns = current.columns;
             animations = current.animations;
             advancedEffects = current.animations && current.advancedEffects;
+            gallery = current.gallery;
             setResult(RESULT_OK);
             refresh();
         });
@@ -111,12 +124,13 @@ public final class LauncherSettingsActivity extends Activity {
                 getString(advancedEffects ? R.string.on : R.string.off)));
         advancedChoice.setEnabled(animations);
         advancedChoice.setAlpha(animations ? 1f : 0.5f);
+        galleryChoice.setText(getString(R.string.gallery_state, getString(gallery ? R.string.on : R.string.off)));
         followThemeChoice.setSelected(!hasOnTvChoices());
     }
 
     private boolean hasOnTvChoices() {
         return choices.contains("columns") || choices.contains("animations")
-                || choices.contains("advanced_effects");
+                || choices.contains("advanced_effects") || choices.contains("gallery");
     }
 
     private void open(Intent intent) {

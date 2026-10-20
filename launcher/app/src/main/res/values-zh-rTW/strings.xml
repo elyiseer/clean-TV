@@ -58,4 +58,5 @@
     <string name="card_state_new">新的</string>
     <string name="card_state_new_key">新金鑰</string>
     <string name="card_state_new_label">新名稱</string>
+    <string name="gallery_state">相簿：%1$s</string>
 </resources>

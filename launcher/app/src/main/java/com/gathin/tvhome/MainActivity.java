@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -21,6 +22,8 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.media.MediaPlayer;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -40,8 +43,11 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.SoundEffectConstants;
 import android.view.ViewGroup;
@@ -109,6 +115,34 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean shamsi;
     /** Optional time-of-day backdrop (config.xml, sky_intensity); 0 keeps it hidden. */
     private SkyView sky;
+    private int backgroundColor;
+    private boolean resumed;
+
+    // Gallery (Gallery.java): photos and videos from Pictures/Launcher behind everything, when on.
+    private static final int REQUEST_PHOTOS = 43;
+    private boolean galleryOn;
+    private boolean askedForPhotos;
+    private FrameLayout galleryLayer;
+    private ImageView galleryFront;
+    private ImageView galleryBack;
+    private Tween galleryFade;
+    private long galleryShownAt;
+    private boolean galleryLoading;
+    /** Folder listing and shuffle order outlive the activity, so a recreate doesn't repeat photos. */
+    private static volatile List<String> galleryPhotos = Collections.emptyList();
+    private static volatile long galleryListedAt;
+    private static final Gallery.ShuffleBag galleryBag = new Gallery.ShuffleBag(new java.util.Random());
+    private final Runnable galleryTick = new Runnable() {
+        @Override
+        public void run() {
+            nextPhoto();
+            handler.postDelayed(this, Gallery.INTERVAL_MS);
+        }
+    };
+    /** The video playing under the photos, on a SurfaceView, or null. */
+    private MediaPlayer videoPlayer;
+    private SurfaceView videoSurface;
+    private String videoPending;
     private String vpnApp;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -229,6 +263,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (cfg.wallpaper != null) showWallpaper(cfg.wallpaper);
         sky = findViewById(R.id.sky);
         sky.setIntensity(cfg.skyIntensity);
+        backgroundColor = cfg.backgroundColor;
+        galleryOn = cfg.gallery;
         glass = findViewById(R.id.glass);
         if (festive) glass.setAccent(festival.accentColor());
         ambient = findViewById(R.id.ambient);
@@ -379,8 +415,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             int firstButton = btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs : R.id.btnWifi;
             int leftButton = rtlMenuBar ? R.id.btnSettings : firstButton;
             int rightButton = rtlMenuBar ? firstButton : R.id.btnSettings;
-            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return v.getId() == leftButton;
-            return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == rightButton;
+            // At the bar's ends, with Gallery showing, Left and Right step back and forward through the photos.
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                boolean end = v.getId() == leftButton;
+                if (end) stepPhoto(true);
+                return end;
+            }
+            boolean end = keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == rightButton;
+            if (end) stepPhoto(false);
+            return end;
         };
         btnInputs.setOnKeyListener(pillKeys);
         btnWifi.setOnKeyListener(pillKeys);
@@ -507,6 +550,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         updateInputsButton();
         sky.update();
         handler.postDelayed(minuteTick, MINUTE_MS);
+        resumed = true;
+        startGallery();
         if (festive && diya != null) {
             diya.start();
             LocalDate today = LocalDate.now();
@@ -592,6 +637,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         heroName.animate().cancel();
         ambient.animate().cancel();
         handler.removeCallbacks(minuteTick);
+        resumed = false;
+        handler.removeCallbacks(galleryTick);
+        stopVideo();   // the decoder goes back to the app being opened
         if (diya != null) diya.stop();
         // Nothing of ours stays on screen over another app; an undecided prompt simply returns next time.
         if (cardPrompt != null) cardPrompt.dismiss();
@@ -840,8 +888,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
             // In the dock, the last app is the row's end: the empty slots after it take no focus.
             int rowCount = position < COLUMNS ? Math.min(count, adapter.dockFilled()) : count;
-            return GridNavigation.atHorizontalEdge(position, rowCount, COLUMNS,
+            boolean edge = GridNavigation.atHorizontalEdge(position, rowCount, COLUMNS,
                     rtlAppGrid, keyCode == KeyEvent.KEYCODE_DPAD_LEFT);
+            // At the ends, with Gallery showing, the key steps back (Left) or forward (Right) through the photos.
+            if (edge) stepPhoto(keyCode == KeyEvent.KEYCODE_DPAD_LEFT);
+            return edge;
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
             if (position < COLUMNS) return false;          // dock row: let focus move to the top bar
@@ -892,6 +943,289 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         });
         grid.smoothScrollToPosition(pos);
+    }
+
+    // ---- Gallery -----------------------------------------------------------------------------------
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PHOTOS) {
+            galleryListedAt = 0;
+            startGallery();
+        }
+    }
+
+    private boolean hasPhotoPermission() {
+        return checkSelfPermission(Gallery.permission()) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * Shows a photo now if none is up or the current one has had its time, then the next in turn. Without
+     * permission to read the photos, asks on the TV once per launch and keeps the usual background.
+     */
+    private void startGallery() {
+        handler.removeCallbacks(galleryTick);
+        if (galleryOn && Gallery.working() && !hasPhotoPermission() && !askedForPhotos) {
+            askedForPhotos = true;
+            requestPermissions(Gallery.permissions(), REQUEST_PHOTOS);
+        }
+        if (!galleryOn || !Gallery.working() || !hasPhotoPermission()) {
+            dropGallery();
+            updateBackdrop();
+            return;
+        }
+        handler.postDelayed(galleryTick, Gallery.delayUntilNext(galleryShownAt, System.currentTimeMillis()));
+    }
+
+    private void nextPhoto() {
+        nextPhoto(false);
+    }
+
+    /**
+     * Left on the leftmost tile or button, Right on the rightmost: the photo before or after this one. Only with
+     * Gallery showing; the photo's time starts again from it.
+     */
+    private void stepPhoto(boolean back) {
+        if (!galleryOn || galleryLayer == null || !Gallery.working()) return;
+        handler.removeCallbacks(galleryTick);
+        nextPhoto(back);
+        handler.postDelayed(galleryTick, Gallery.INTERVAL_MS);
+    }
+
+    /** Lists the folder when due, picks the next item and decodes a photo on the gallery thread. */
+    private void nextPhoto(final boolean back) {
+        if (galleryLoading || !Gallery.working()) return;
+        galleryLoading = true;
+        final Context app = getApplicationContext();
+        int rw = root.getWidth() > 0 ? root.getWidth() : getResources().getDisplayMetrics().widthPixels;
+        int rh = root.getHeight() > 0 ? root.getHeight() : getResources().getDisplayMetrics().heightPixels;
+        // At most 1920 px wide: two screen-size RGB_565 bitmaps are about 8 MB at 1080p, but 33 MB on a 4K root.
+        final int w = Math.min(rw, Gallery.MAX_DECODE_WIDTH);
+        final int h = rh * w / Math.max(1, rw);
+        Gallery.EXECUTOR.execute(() -> {
+            Bitmap bmp = Gallery.run(() -> {
+                long now = System.currentTimeMillis();
+                if (Gallery.relistDue(galleryListedAt, now)) {
+                    galleryPhotos = Gallery.list(app, true);
+                    galleryListedAt = now;
+                }
+                // A photo that can't be read is skipped; give up after a few so a folder of bad files can't spin.
+                for (int tries = 0; tries < 5; tries++) {
+                    String item = back ? galleryBag.previous(galleryPhotos) : galleryBag.next(galleryPhotos);
+                    if (item == null) return null;
+                    if (Gallery.isVideo(item)) {
+                        handler.post(() -> playVideo(item));   // played on the main thread, not decoded
+                        return null;
+                    }
+                    Bitmap b = Gallery.decode(app, item, w, h);
+                    if (b != null) return b;
+                }
+                return null;
+            }, null);
+            handler.post(() -> {
+                galleryLoading = false;
+                if (isDestroyed() || !galleryOn) {
+                    if (bmp != null) bmp.recycle();
+                    return;
+                }
+                if (bmp != null) Gallery.run(() -> {
+                    showPhoto(bmp);
+                    return null;
+                }, null);
+            });
+        });
+    }
+
+    /** Crossfades to a new photo over about a second; the one it replaces is let go once covered. */
+    private void showPhoto(Bitmap bmp) {
+        ensureGalleryLayer();
+        final ImageView incoming = galleryBack;
+        final ImageView outgoing = galleryFront;
+        if (galleryFade != null) galleryFade.cancel();
+        incoming.setImageBitmap(bmp);
+        incoming.setAlpha(0f);
+        galleryLayer.removeView(incoming);
+        galleryLayer.addView(incoming, galleryLayer.getChildCount() - 1);   // above the rest, under the scrim
+        galleryFront = incoming;
+        galleryBack = outgoing;
+        galleryShownAt = System.currentTimeMillis();
+        // A photo stays INTERVAL_MS; a video before it was playing on, untimed.
+        handler.removeCallbacks(galleryTick);
+        handler.postDelayed(galleryTick, Gallery.INTERVAL_MS);
+        // The background stays under the first photo until it has faded in; a video under it stops once it
+        // is covered. Frame by frame, so the crossfade shows on TVs with system animations off.
+        galleryFade = new Tween(0f, v -> {
+            incoming.setAlpha(v);
+            if (v >= 1f) {
+                if (galleryBack == outgoing) release(outgoing);
+                outgoing.setAlpha(1f);
+                stopVideo();
+                updateBackdrop();
+            }
+        });
+        galleryFade.to(1f, 1200);
+    }
+
+    /**
+     * Plays a gallery video muted, to its end, then moves on. It plays on a surface under the photos (the
+     * TV's video plane does the work); the photo on top fades away once the first frame is up, so nothing
+     * flashes black.
+     */
+    private void playVideo(String item) {
+        if (isDestroyed() || !galleryOn || !resumed) return;
+        ensureGalleryLayer();
+        handler.removeCallbacks(galleryTick);   // a video is not timed
+        galleryShownAt = System.currentTimeMillis();
+        if (videoSurface == null) {
+            videoSurface = new SurfaceView(this);
+            videoSurface.getHolder().addCallback(new SurfaceHolder.Callback() {
+                @Override
+                public void surfaceCreated(@NonNull SurfaceHolder holder) {
+                    if (videoPending != null) {
+                        String pending = videoPending;
+                        videoPending = null;
+                        startPlayer(pending);
+                    }
+                }
+
+                @Override
+                public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+                }
+
+                @Override
+                public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+                    stopVideo();
+                }
+            });
+            galleryLayer.addView(videoSurface, 0, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER));
+        }
+        if (videoSurface.getHolder().getSurface().isValid()) startPlayer(item);
+        else videoPending = item;
+    }
+
+    private void startPlayer(String item) {
+        releasePlayer();
+        MediaPlayer mp = new MediaPlayer();
+        videoPlayer = mp;
+        try {
+            if (item.startsWith("content:")) mp.setDataSource(this, Uri.parse(item));
+            else mp.setDataSource(item);
+            mp.setSurface(videoSurface.getHolder().getSurface());
+            mp.setVolume(0f, 0f);
+            mp.setOnVideoSizeChangedListener((p, vw, vh) -> coverWith(vw, vh));
+            mp.setOnInfoListener((p, what, extra) -> {
+                if (what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START && p == videoPlayer) revealVideo();
+                return false;
+            });
+            mp.setOnCompletionListener(p -> {
+                if (p == videoPlayer) nextPhoto();
+            });
+            mp.setOnErrorListener((p, what, extra) -> {
+                Log.w(Gallery.TAG, "video failed " + what + "/" + extra + ": " + item);
+                if (p == videoPlayer) {
+                    stopVideo();
+                    nextPhoto();
+                }
+                return true;
+            });
+            mp.setOnPreparedListener(MediaPlayer::start);
+            mp.prepareAsync();
+        } catch (Exception e) {
+            Log.w(Gallery.TAG, "video skipped " + item + ": " + e);
+            stopVideo();
+            handler.post(this::nextPhoto);
+        }
+    }
+
+    /** Sizes the surface to cover the screen at the video's own shape, centred; the overflow is cut off. */
+    private void coverWith(int vw, int vh) {
+        if (videoSurface == null || vw <= 0 || vh <= 0 || root.getWidth() == 0) return;
+        float scale = Math.max((float) root.getWidth() / vw, (float) root.getHeight() / vh);
+        ViewGroup.LayoutParams lp = videoSurface.getLayoutParams();
+        lp.width = Math.round(vw * scale);
+        lp.height = Math.round(vh * scale);
+        videoSurface.setLayoutParams(lp);
+    }
+
+    /** The first frame is up: fade the photo above away so the video shows. */
+    private void revealVideo() {
+        if (galleryFront == null) return;
+        final ImageView top = galleryFront;
+        if (galleryFade != null) galleryFade.cancel();
+        galleryFade = new Tween(top.getAlpha(), top::setAlpha);
+        galleryFade.to(0f, 1200);
+    }
+
+    private void releasePlayer() {
+        if (videoPlayer == null) return;
+        try {
+            videoPlayer.release();
+        } catch (Exception ignored) {
+            // already gone
+        }
+        videoPlayer = null;
+    }
+
+    /**
+     * Stops the video and gives the decoder back (leaving Home, a photo covering it). The photo it was
+     * hiding shows again, and leaving mid-video means a new item on the way back.
+     */
+    private void stopVideo() {
+        videoPending = null;
+        if (videoPlayer == null) return;
+        releasePlayer();
+        if (galleryFront != null) galleryFront.setAlpha(1f);
+        if (!resumed) galleryShownAt = 0;
+    }
+
+    /** The photo layer: two photos for the crossfade and a scrim, above the sky and the theme wallpaper. */
+    private void ensureGalleryLayer() {
+        if (galleryLayer != null) return;
+        galleryLayer = new FrameLayout(this);
+        FrameLayout.LayoutParams full = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        galleryFront = new ImageView(this);
+        galleryBack = new ImageView(this);
+        for (ImageView v : new ImageView[] {galleryFront, galleryBack}) {
+            v.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            galleryLayer.addView(v, new FrameLayout.LayoutParams(full));
+        }
+        // Darker at the top and bottom so the clock, the header and the dock stay readable on bright photos.
+        View scrim = new View(this);
+        scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0x8C000000, 0x1A000000, 0x26000000, 0xB3000000}));
+        galleryLayer.addView(scrim, new FrameLayout.LayoutParams(full));
+        root.addView(galleryLayer, root.indexOfChild(sky) + 1, full);
+        // The app-coloured glow stays off over the photos: tinting family photos red or blue looks wrong.
+        ambient.setVisibility(View.INVISIBLE);
+    }
+
+    /** Lets go of a photo. Not recycle(): a frame already recorded may still draw it; the collector frees it. */
+    private static void release(ImageView v) {
+        v.setImageDrawable(null);
+    }
+
+    /** Removes the photos (Gallery off, or no permission); the theme wallpaper or colour shows again. */
+    private void dropGallery() {
+        stopVideo();
+        videoSurface = null;
+        if (galleryLayer == null) return;
+        if (galleryFade != null) galleryFade.cancel();
+        release(galleryFront);
+        release(galleryBack);
+        root.removeView(galleryLayer);
+        galleryLayer = null;
+        galleryFront = null;
+        galleryBack = null;
+        galleryShownAt = 0;
+        ambient.setVisibility(View.VISIBLE);
+    }
+
+    /** Under the photos the root's colour would be overdraw; it comes back when they go. */
+    private void updateBackdrop() {
+        if (galleryLayer != null) root.setBackground(null);
+        else root.setBackgroundColor(backgroundColor);
     }
 
     // ---- top bar ---------------------------------------------------------------------------------
