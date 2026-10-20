@@ -114,6 +114,13 @@ Things that bit us or contributors, so they don't bite you. Commands use `tools/
   package that also claims HOME (PatchWall on Xiaomi) makes Android drop the default. The install
   script now picks the known stock launcher among the candidates by itself; otherwise choose one on
   the TV or pass `STOCK_LAUNCHER=<package>`.
+- **A firmware update quietly undoes the cleanup.** The update installs over the cleaned-up system, so
+  every listed package is enabled again, Home goes back to the stock launcher and new preloads
+  appear that no list mentions. `tools/venv/bin/python -I tools/check.py <list>` reports the first
+  two and exits 1; `--fix` disables them again and puts the launcher back on Home. New preloads it
+  cannot know about, so after a big update compare `tools/tv.py 'pm list packages'` with the list
+  once by hand. On a TV whose list disables the updater, this only happens when you install an
+  update on purpose: enable the updater, update, `check.py --fix`, disable it again.
 
 ## Accessibility helper enabled but the remote button does nothing
 
