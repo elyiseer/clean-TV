@@ -22,31 +22,6 @@
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
             android:contentDescription="@null" />
-
-        <ImageView
-            android:id="@+id/icon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="center"
-            android:layout_marginBottom="14dp"
-            android:visibility="gone"
-            android:contentDescription="@null" />
-
-        <TextView
-            android:id="@+id/label"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingBottom="8dp"
-            android:gravity="center"
-            android:singleLine="true"
-            android:ellipsize="end"
-            android:textColor="#FFFFFFFF"
-            android:textSize="13sp"
-            android:fontFamily="@font/outfit"
-            android:visibility="gone" />
     </FrameLayout>
 
     <TextView
