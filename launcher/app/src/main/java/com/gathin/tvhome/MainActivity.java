@@ -430,10 +430,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnInputs.setOnClickListener(v -> showInputs());
         btnWifi.setOnClickListener(v -> openNetworkPill());
         btnWifi.setOnLongClickListener(v -> {
-            open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
+            open(systemIntent(this, Settings.ACTION_WIFI_SETTINGS));
             return true;
         });
-        btnSettings.setOnClickListener(v -> open(systemIntent(Settings.ACTION_SETTINGS)));
+        btnSettings.setOnClickListener(v -> open(systemIntent(this, Settings.ACTION_SETTINGS)));
         btnReorder = findViewById(R.id.btnReorder);
         btnReorder.setOnClickListener(v -> toggleReorder());
         btnReorder.setVisibility(cfg.reorderButton ? View.VISIBLE : View.GONE);
@@ -696,7 +696,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (event.getKeyCode() != code) continue;
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
                 open(settingsKeyPanel ? new Intent(this, QuickSettingsActivity.class)
-                        : systemIntent(Settings.ACTION_SETTINGS));
+                        : systemIntent(this, Settings.ACTION_SETTINGS));
             }
             return true;
         }
@@ -1680,7 +1680,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void openNetworkPill() {
         Intent i = vpnApp.isEmpty() ? null : getPackageManager().getLeanbackLaunchIntentForPackage(vpnApp);
         if (i == null && !vpnApp.isEmpty()) i = getPackageManager().getLaunchIntentForPackage(vpnApp);
-        open(i != null ? i : systemIntent(Settings.ACTION_WIFI_SETTINGS));
+        open(i != null ? i : systemIntent(this, Settings.ACTION_WIFI_SETTINGS));
     }
 
 
@@ -1689,12 +1689,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * settings app (com.xiaomi.mitv.settings) there, so the Settings and Wi-Fi pills keep working.
      * On firmware with a standard settings handler the behaviour is unchanged.
      */
-    private Intent systemIntent(String standardAction) {
+    public static Intent systemIntent(Context ctx, String standardAction) {
         Intent i = new Intent(standardAction);
-        if (i.resolveActivity(getPackageManager()) != null) return i;
+        ComponentName resolved = i.resolveActivity(ctx.getPackageManager());
+        if (resolved != null) {
+            // Fire OS answers the standard settings actions with a CTS compliance stub that
+            // opens nothing; the real menu lives in the stock launcher's MainSettingsActivity.
+            if (resolved.getClassName().contains("CTSDummy")) {
+                Intent fire = new Intent().setComponent(new ComponentName(
+                        "com.amazon.tv.launcher", "com.amazon.tv.launcher.ui.MainSettingsActivity"));
+                if (fire.resolveActivity(ctx.getPackageManager()) != null) return fire;
+            }
+            return i;
+        }
         i = new Intent().setComponent(new ComponentName(
                 "com.xiaomi.mitv.settings", "com.xiaomi.mitv.settings.entry.MainActivity"));
-        if (i.resolveActivity(getPackageManager()) != null) return i;
+        if (i.resolveActivity(ctx.getPackageManager()) != null) return i;
         return new Intent(standardAction);   // nothing found: let open() show the can't-open toast
     }
 
