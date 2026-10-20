@@ -131,6 +131,7 @@ on that firmware, grouped and commented. These are starting points: comment out 
 
 Notes for models that have no tested list yet live in [`docs/devices/`](../docs/devices/):
 
+- [Sony XR-75X91K (China firmware)](../docs/devices/sony-xr-75x91k-cn.md), owner-reported retail model, `BRAVIA 4K VH21` / `BRAVIA_VH21`, Android 12: ChinaHome launcher component, preferred-Home handover with stock Home enabled, Sony TV/input routing and explicit validation limits; no tested debloat list.
 - [TCL `75c63b`](../docs/devices/tcl-75c63b.md), owner-reported retail model, `Smart TV Pro` / `BeyondTV4`, Android 11, `V8-R51MT05-LF1V652`: launcher-only installation, HOME priorities and component restrictions, correct Live TV player package, restoration and explicit test limits.
 - [Xiaomi MiTV-MFTR0 "freeguy"](../docs/devices/xiaomi-mitv-mftr0-freeguy.txt), China, Android 14: inputs, Xiaomi settings intents, app discovery.
 
