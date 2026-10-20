@@ -23,4 +23,5 @@
     <locale android:name="vi" />
     <locale android:name="bn" />
     <locale android:name="cs" />
+    <locale android:name="it" />
 </locale-config>
