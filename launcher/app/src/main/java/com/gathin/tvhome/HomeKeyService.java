@@ -1,6 +1,7 @@
 package com.gathin.tvhome;
 
 import android.accessibilityservice.AccessibilityService;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.provider.Settings;
 import android.view.KeyEvent;
@@ -20,6 +21,8 @@ import java.util.Map;
  */
 public class HomeKeyService extends AccessibilityService {
 
+    private static final String TAG = "HomeKeyService";
+
     /** Remote buttons that should open Settings (config.xml, settings_key_scancodes and settings_key_keycodes). */
     private int[] settingsScancodes = new int[0];
     private int[] settingsKeycodes = new int[0];
@@ -30,6 +33,7 @@ public class HomeKeyService extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
+        android.util.Log.i(TAG, "onServiceConnected");
         settingsScancodes = getResources().getIntArray(R.array.settings_key_scancodes);
         // Keycodes and the panel choice can also come from a theme; theme.sh restarts this service.
         Config config = Config.load(this);
@@ -39,19 +43,30 @@ public class HomeKeyService extends AccessibilityService {
     }
 
     private boolean isSettingsKey(KeyEvent event) {
-        if (event.getKeyCode() == KeyEvent.KEYCODE_SETTINGS) return true;
-        for (int code : settingsScancodes) if (event.getScanCode() == code) return true;
-        for (int code : settingsKeycodes) if (event.getKeyCode() == code) return true;
+        int kc = event.getKeyCode();
+        if (kc == KeyEvent.KEYCODE_SETTINGS || kc == KeyEvent.KEYCODE_NOTIFICATION || kc == KeyEvent.KEYCODE_MENU || kc == 308) {
+            return true;
+        }
+        for (int code : settingsScancodes) {
+            if (event.getScanCode() == code) return true;
+        }
+        for (int code : settingsKeycodes) {
+            if (kc == code) return true;
+        }
         return false;
     }
 
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
+        android.util.Log.d(TAG, "onKeyEvent: action=" + event.getAction() + " keyCode=" + event.getKeyCode() + " scanCode=" + event.getScanCode());
         // The stock launcher handled the remote's Settings button; with it disabled the button does nothing.
         if (isSettingsKey(event)) {
+            android.util.Log.i(TAG, "Intercepted settings key: " + event.getKeyCode());
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
-                Intent open = settingsPanel ? new Intent(this, QuickSettingsActivity.class)
-                        : new Intent(Settings.ACTION_SETTINGS);
+                boolean onLauncher = MainActivity.isForeground ||
+                        (MainActivity.lastPausedTimestamp > 0 && (System.currentTimeMillis() - MainActivity.lastPausedTimestamp < 600));
+                Intent open = new Intent(this, QuickSettingsActivity.class);
+                open.putExtra(QuickSettingsActivity.EXTRA_ON_LAUNCHER, onLauncher);
                 startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             }
             return true;

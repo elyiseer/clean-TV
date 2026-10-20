@@ -61,7 +61,9 @@
     <string name="card_state_new">חדש</string>
     <string name="card_state_new_key">מפתח חדש</string>
     <string name="card_state_new_label">שם חדש</string>
+    <string name="quick_screensaver">שומר מסך</string>
     <string name="quick_picture">תצוגה</string>
+    <string name="quick_sound">שמע</string>
     <string name="quick_network">רשת</string>
     <string name="quick_apps">אפליקציות</string>
     <string name="quick_apps_hint">הפעלה מחדש</string>

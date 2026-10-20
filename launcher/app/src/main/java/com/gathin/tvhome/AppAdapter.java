@@ -337,6 +337,32 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return width <= 0 || height <= 0 || width >= height * 1.4f;
     }
 
+    private int tileWidth = -1, tileHeight = -1;
+
+    void setTileDimensions(int width, int height) {
+        if (width <= 0 || height <= 0 || (this.tileWidth == width && this.tileHeight == height)) return;
+        this.tileWidth = width;
+        this.tileHeight = height;
+        notifyItemRangeChanged(0, getItemCount());
+    }
+
+    int getTileWidth() {
+        return tileWidth;
+    }
+
+    private void ensureTileSize(ViewGroup parent) {
+        if (tileWidth > 0 && tileHeight > 0) return;
+        float density = parent.getResources().getDisplayMetrics().density;
+        DisplayMetrics dm = parent.getResources().getDisplayMetrics();
+        int width = parent.getWidth() > 0 ? parent.getWidth() : parent.getMeasuredWidth();
+        int inner = width > 0 ? width - parent.getPaddingLeft() - parent.getPaddingRight()
+                : dm.widthPixels - Math.round(112 * density);
+        int height = parent.getHeight() > 0 ? parent.getHeight() : parent.getMeasuredHeight();
+        if (height <= 0) height = dm.heightPixels;
+        tileWidth = tileWidthPx(inner, height, dockSize, rowsBelowDock, dockTitle, dockRow, density);
+        tileHeight = tileHeightPx(tileWidth);
+    }
+
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -354,10 +380,9 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return new RecyclerView.ViewHolder(row) { };
         }
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_app, parent, false);
+        ensureTileSize(parent);
         float density = parent.getResources().getDisplayMetrics().density;
-        int width = parent.getWidth() > 0 ? parent.getWidth() : parent.getMeasuredWidth();
-        int inner = width - parent.getPaddingLeft() - parent.getPaddingRight();
-        int w = tileWidthPx(inner, parent.getHeight(), dockSize, rowsBelowDock, dockTitle, dockRow, density), h = tileHeightPx(w);
+        int w = tileWidth, h = tileHeight;
         View card = v.findViewById(R.id.card);
         ViewGroup.LayoutParams cardLp = card.getLayoutParams();
         cardLp.width = w;
@@ -381,6 +406,20 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (isLibraryAt(position)) return;
         Holder h = (Holder) holder;
+        if (tileWidth > 0 && tileHeight > 0) {
+            ViewGroup.LayoutParams cardLp = h.card.getLayoutParams();
+            if (cardLp.width != tileWidth || cardLp.height != tileHeight) {
+                cardLp.width = tileWidth;
+                cardLp.height = tileHeight;
+                h.card.setLayoutParams(cardLp);
+            }
+            ViewGroup.MarginLayoutParams nameLp = (ViewGroup.MarginLayoutParams) h.name.getLayoutParams();
+            if (nameLp.width != tileWidth) {
+                nameLp.width = tileWidth;
+                nameLp.topMargin = tileHeight + Math.round((dockRow ? 7 : 4) * ctx.getResources().getDisplayMetrics().density);
+                h.name.setLayoutParams(nameLp);
+            }
+        }
         Entry e = items.get(position);
         if (e.kind == Entry.EMPTY) {
             // A free dock slot keeps its place in the row and the band, but shows nothing and takes no focus.

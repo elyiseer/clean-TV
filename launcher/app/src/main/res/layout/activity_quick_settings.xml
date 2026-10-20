@@ -6,23 +6,31 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/panel"
-        android:layout_width="wrap_content"
-        android:minWidth="220dp"
+    <ScrollView
+        android:id="@+id/scroll"
+        android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:layout_marginTop="105dp"
         android:layout_marginEnd="56dp"
-        android:orientation="vertical"
-        android:background="@drawable/glass_panel"
-        android:padding="6dp"
-        android:elevation="12dp">
+        android:layout_marginBottom="36dp"
+        android:scrollbars="none"
+        android:overScrollMode="never">
 
         <LinearLayout
-            android:id="@+id/rows"
+            android:id="@+id/panel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </LinearLayout>
+            android:orientation="vertical"
+            android:background="@drawable/glass_panel"
+            android:padding="6dp"
+            android:elevation="12dp">
+
+            <LinearLayout
+                android:id="@+id/rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </ScrollView>
 </FrameLayout>

@@ -93,6 +93,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     static final String ACTION_LAUNCHER_SETTINGS = "com.gathin.tvhome.action.LAUNCHER_SETTINGS";
     /** Tiles per row and dock slots (res/values/config.xml, columns). Set in onCreate. */
     static int COLUMNS = 4;
+    public static volatile boolean isForeground = false;
+    public static volatile long lastPausedTimestamp = 0;
     private boolean rtlAppGrid;
     private static final long MINUTE_MS = 60_000L;
     private static final long STATS_MS = 10_000L;
@@ -168,6 +170,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean reducedMotion;
     /** config.xml dock_row: the first row is a separate dock (band, parked low, top shelf) rather than plain grid. */
     private boolean dockRow;
+    private int rowsBelowDock;
     /** Festive skin from the theme (see Festival); applied while it is active today. */
     private Festival festival = Festival.NONE;
     private boolean festive;
@@ -408,13 +411,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         // tvOS layout: push the dock row towards the bottom of the screen, leaving room for
         // rows_below_dock grid rows under it; the rest of the grid stays below until you press Down.
-        int rowsBelowDock = cfg.rowsBelowDock;
+        rowsBelowDock = cfg.rowsBelowDock;
         grid.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
             int h = b - t;
             // Item height follows the tile size, which follows the columns and the rows that must fit (AppAdapter.tileWidthPx).
             int inner = (r - l) - grid.getPaddingLeft() - grid.getPaddingRight();
             int tileW = AppAdapter.tileWidthPx(inner, h, COLUMNS, rowsBelowDock, cfg.dockTitle, cfg.dockRow, density);
-            int itemH = AppAdapter.itemHeightPx(AppAdapter.tileHeightPx(tileW), density);
+            int tileH = AppAdapter.tileHeightPx(tileW);
+            if (adapter != null) adapter.setTileDimensions(tileW, tileH);
+            int itemH = AppAdapter.itemHeightPx(tileH, density);
             int dockRow = itemH + (int) (AppAdapter.DOCK_EXTRA_DP * density);   // item height plus DockDecoration offsets
             int gridRows = itemH * rowsBelowDock;
             // Keep the hero below the header when the library is enabled on a short screen,
@@ -478,7 +483,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
             return true;
         });
-        btnSettings.setOnClickListener(v -> open(systemIntent(Settings.ACTION_SETTINGS)));
+        btnSettings.setOnClickListener(v -> {
+            if (settingsKeyPanel) {
+                Intent q = new Intent(this, QuickSettingsActivity.class);
+                q.putExtra(QuickSettingsActivity.EXTRA_ON_LAUNCHER, true);
+                open(q);
+            } else {
+                open(systemIntent(Settings.ACTION_SETTINGS));
+            }
+        });
         btnReorder = findViewById(R.id.btnReorder);
         btnReorder.setOnClickListener(v -> toggleReorder());
         btnReorder.setVisibility(cfg.reorderButton ? View.VISIBLE : View.GONE);
@@ -578,8 +591,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onResume() {
         super.onResume();
+        isForeground = true;
         // A festival that started or ended while Home was in the background: rebuild with or without it.
         if (festive != festival.active(LocalDate.now())) {
+            recreate();
+            return;
+        }
+        Config currentCfg = Config.load(this);
+        if (currentCfg.columns != COLUMNS
+                || currentCfg.animations != animations
+                || (currentCfg.animations && currentCfg.advancedEffects) != advancedEffects
+                || currentCfg.reducedMotion != reducedMotion
+                || currentCfg.dockRow != dockRow
+                || currentCfg.rowsBelowDock != rowsBelowDock) {
             recreate();
             return;
         }
@@ -692,6 +716,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onPause() {
         super.onPause();
+        isForeground = false;
+        lastPausedTimestamp = System.currentTimeMillis();
         endReorder();   // Home or another app while reordering keeps the order so far
         wallpaperPlayer.stop();
         stopAmbientAnimation();
@@ -744,11 +770,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * nothing even on Home.
      */
     private boolean handleSettingsKey(KeyEvent event) {
-        for (int code : settingsKeycodes) {
-            if (event.getKeyCode() != code) continue;
+        int kc = event.getKeyCode();
+        boolean match = kc == KeyEvent.KEYCODE_SETTINGS || kc == KeyEvent.KEYCODE_NOTIFICATION || kc == KeyEvent.KEYCODE_MENU || kc == 308;
+        if (!match) {
+            for (int code : settingsKeycodes) {
+                if (kc == code) {
+                    match = true;
+                    break;
+                }
+            }
+        }
+        if (match) {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
-                open(settingsKeyPanel ? new Intent(this, QuickSettingsActivity.class)
-                        : systemIntent(Settings.ACTION_SETTINGS));
+                if (settingsKeyPanel) {
+                    Intent q = new Intent(this, QuickSettingsActivity.class);
+                    q.putExtra(QuickSettingsActivity.EXTRA_ON_LAUNCHER, true);
+                    open(q);
+                } else {
+                    open(systemIntent(Settings.ACTION_SETTINGS));
+                }
             }
             return true;
         }
