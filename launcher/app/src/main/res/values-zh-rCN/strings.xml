@@ -34,4 +34,5 @@
     <string name="cant_open">无法打开 %1$s</string>
     <string name="date_format">M月d日 EEEE</string>
     <string name="dream_name">时钟</string>
+    <string name="now_playing_description">正在播放：按 OK 播放或暂停，左右键切换曲目，长按 OK 打开应用</string>
 </resources>

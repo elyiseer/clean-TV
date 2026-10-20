@@ -87,6 +87,12 @@
          label, caption and glow colour, once you answer Show on the prompt. false: never look for cards or ask. -->
     <bool name="module_cards">true</bool>
 
+    <!-- Now playing: a card above the dock for the app playing in the background (YouTube Music, Spotify…),
+         with play/pause, previous and next. Off by default. It also needs the notification listener, which
+         the install script enables only when asked (NOW_PLAYING=1, or -NowPlaying on Windows); without it
+         the card never shows. -->
+    <bool name="now_playing">false</bool>
+
     <!-- Reduced motion: for TVs whose GPU cannot keep up (MediaTek MT5895 on Android 10 is the known case).
          true keeps the GPU drawing path but calms the movement: a stiff highlight spring with no bounce,
          tiles that zoom without overshoot, shorter fades and no tile entrance when Home comes back. Set it

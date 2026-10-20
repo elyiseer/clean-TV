@@ -58,4 +58,5 @@
     <string name="on">تشغيل</string>
     <string name="off">إيقاف</string>
     <string name="enable">تفعيل</string>
+    <string name="now_playing_description">قيد التشغيل: OK للتشغيل أو الإيقاف المؤقت، يمين ويسار للتخطي، اضغط مطولًا على OK لفتح التطبيق</string>
 </resources>

@@ -58,4 +58,5 @@
     <string name="on">Açık</string>
     <string name="off">Kapalı</string>
     <string name="enable">Etkinleştir</string>
+    <string name="now_playing_description">Şimdi çalıyor: OK oynatır veya duraklatır, sol ve sağ atlar, uygulamayı açmak için OK\'a basılı tutun</string>
 </resources>

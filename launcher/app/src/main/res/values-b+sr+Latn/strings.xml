@@ -39,4 +39,5 @@
     <string name="on">Uklj.</string>
     <string name="off">Isklj.</string>
     <string name="enable">Uključi</string>
+    <string name="now_playing_description">Sada se reprodukuje: OK pušta ili pauzira, levo i desno preskaču, zadržite OK da otvorite aplikaciju</string>
 </resources>

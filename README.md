@@ -274,6 +274,7 @@ the install script finds `~/Android/Sdk` and the `java` on your PATH.
   Hebrew places the menu buttons on the left and the date and clock on the right, with the greeting above the clock. The Clock screensaver right-aligns its date and time, and Hebrew dates include the month prefix ב (for example, 19 באוקטובר). Hebrew dock and app-grid rows start on the right, with matching left/right remote navigation. The Hebrew input selector places icons and labels on the right, status on the left, and aligns the dropdown with the Inputs button’s right edge. Other languages keep their original layouts.
   Russian includes the module-card approval and management screens and the VPN-off badge.
 - **Module cards** let any TV app declare its own tile (label, caption, glow). The launcher asks you once per app, Keep hidden by default, and remembers the answer for that app's signing key and card name. Hold OK on Settings and choose Module cards to change your mind. How to make one: [`docs/modules.md`](docs/modules.md); the contract: [`docs/specs/card.md`](docs/specs/card.md).
+- **Now playing** (off by default): a card above the dock for music playing in the background, with play/pause and skip on the remote. Turn on `now_playing` and install with `NOW_PLAYING=1`, see below.
 - **Clock screensaver**: a drifting clock over the glow, so nothing burns in. Pick "Clock" in the TV's screensaver settings, or over ADB:
   `tools/tv.py 'settings put secure screensaver_components com.gathin.tvhome/.ClockDream; settings put secure screensaver_enabled 1'`
 - **Remote keys**: an optional accessibility service keeps the remote's Input button working on Google TV (`INPUT_KEY_SERVICE=1` at install), another fixes sticks whose Home key sends ALL_APPS and opens Settings from the remote's gear button, even one Android does not map (`HOME_KEY_SERVICE=1`, scancodes or keycodes in `config.xml`). With `settings_key_panel` the gear opens a [small quick settings panel](docs/quick-settings-panel.jpg) instead, over Home or any app: TV settings, Display, Network, Apps and Launcher settings.
@@ -335,6 +336,13 @@ The launcher just lists what is installed and launches it with intents that have
 link instead of the same Wi-Fi: either Tailscale on their TV, shared with you, or a computer or Apple
 TV at their home routing to it. Never by opening the ADB port on their router. Step by step in
 [docs/REMOTE.md](docs/REMOTE.md).
+
+**What can the Now playing card see?** To list other apps' media sessions, Android requires an enabled
+notification listener, and that grant lets the launcher process read every notification on the TV, not only
+media. The launcher's listener ignores notifications and only asks for the playing session's title, artist,
+artwork and controls. It is never enabled by default: the install script enables it only with
+`NOW_PLAYING=1` (`-NowPlaying` on Windows), and you can revoke it under Settings → Apps → Special app access →
+Notification access, or with `tools/tv.py 'cmd notification disallow_listener com.gathin.tvhome/com.gathin.tvhome.NowPlayingListener'`.
 
 **Isn't ADB access a security hole?** It is one explicit "allow this computer" tap on the TV, the
 same as developing an Android app. Network ADB is plaintext on port 5555, and on firmware with

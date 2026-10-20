@@ -35,4 +35,5 @@
     <string name="on">Ein</string>
     <string name="off">Aus</string>
     <string name="enable">Aktivieren</string>
+    <string name="now_playing_description">Wiedergabe: OK spielt oder pausiert, links und rechts springen, OK gedrückt halten öffnet die App</string>
 </resources>

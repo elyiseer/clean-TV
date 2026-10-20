@@ -58,4 +58,5 @@
     <string name="on">Wł.</string>
     <string name="off">Wył.</string>
     <string name="enable">Włącz</string>
+    <string name="now_playing_description">Teraz odtwarzane: OK odtwarza lub wstrzymuje, lewo i prawo przewijają, przytrzymaj OK, by otworzyć aplikację</string>
 </resources>

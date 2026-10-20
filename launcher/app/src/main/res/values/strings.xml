@@ -64,4 +64,5 @@
     <string name="card_state_new">New</string>
     <string name="card_state_new_key">New key</string>
     <string name="card_state_new_label">New name</string>
+    <string name="now_playing_description">Now playing: OK plays or pauses, left and right skip, hold OK to open the app</string>
 </resources>

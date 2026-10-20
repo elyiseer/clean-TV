@@ -46,4 +46,5 @@
     <string name="card_state_new">Novo</string>
     <string name="card_state_new_key">Nova chave</string>
     <string name="card_state_new_label">Novo nome</string>
+    <string name="now_playing_description">A reproduzir: OK reproduz ou pausa, esquerda e direita saltam, mantenha OK para abrir a app</string>
 </resources>

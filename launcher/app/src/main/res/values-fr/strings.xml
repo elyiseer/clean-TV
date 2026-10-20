@@ -58,4 +58,5 @@
     <string name="on">Activé</string>
     <string name="off">Désactivé</string>
     <string name="enable">Activer</string>
+    <string name="now_playing_description">Lecture en cours : OK lit ou met en pause, gauche et droite passent, maintenez OK pour ouvrir l\'appli</string>
 </resources>

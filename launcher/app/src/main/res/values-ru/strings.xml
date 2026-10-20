@@ -58,4 +58,5 @@
     <string name="on">Вкл.</string>
     <string name="off">Выкл.</string>
     <string name="enable">Включить</string>
+    <string name="now_playing_description">Сейчас играет: OK — воспроизведение или пауза, влево и вправо — переключение, удерживайте OK, чтобы открыть приложение</string>
 </resources>

@@ -178,6 +178,7 @@
                     style="@style/TopButton"
                     android:text="@string/settings"
                     android:drawableStart="@drawable/ic_settings"
+                    android:nextFocusRight="@+id/btnWifi"
                     android:nextFocusDown="@+id/grid" />
 
                 <TextView
@@ -188,6 +189,8 @@
                     android:ellipsize="end"
                     android:text="@string/wifi"
                     android:drawableStart="@drawable/ic_wifi"
+                    android:nextFocusLeft="@+id/btnSettings"
+                    android:nextFocusRight="@+id/btnInputs"
                     android:nextFocusDown="@+id/grid" />
 
                 <TextView
@@ -195,6 +198,7 @@
                     style="@style/TopButton"
                     android:text="@string/inputs"
                     android:drawableStart="@drawable/ic_input"
+                    android:nextFocusLeft="@+id/btnWifi"
                     android:nextFocusDown="@+id/grid" />
             </LinearLayout>
         </RelativeLayout>
@@ -218,6 +222,74 @@
                 android:scrollbars="none"
                 android:descendantFocusability="afterDescendants" />
         </FrameLayout>
+    </LinearLayout>
+
+    <!-- Now playing (now_playing): the media session of the app playing in the background, on the left above
+         the dock under Settings (this layout's top bar and dock run right to left), placed in code
+         (NowPlayingCard). Hidden until there is one. -->
+    <LinearLayout
+        android:id="@+id/nowPlaying"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|top"
+        android:layout_marginStart="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="8dp"
+        android:background="@drawable/now_playing_bg"
+        android:focusable="true"
+        android:clickable="true"
+        android:longClickable="true"
+        android:nextFocusUp="@+id/btnSettings"
+        android:alpha="0"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/nowPlayingArt"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:scaleType="centerCrop"
+            android:importantForAccessibility="no" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/nowPlayingTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="180dp"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textColor="#FFFFFFFF"
+                android:textSize="14sp"
+                android:fontFamily="@font/outfit"
+                android:fontVariationSettings="'wght' 500" />
+
+            <TextView
+                android:id="@+id/nowPlayingSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:maxWidth="180dp"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textColor="#B3FFFFFF"
+                android:textSize="11sp"
+                android:fontFamily="@font/outfit" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/nowPlayingState"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginEnd="4dp"
+            android:tint="#FFFFFFFF"
+            android:importantForAccessibility="no" />
     </LinearLayout>
 
     <!-- The single floating glass highlight that springs between tiles. -->

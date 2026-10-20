@@ -31,4 +31,5 @@
     <string name="on">Activat</string>
     <string name="off">Desactivat</string>
     <string name="enable">Activa</string>
+    <string name="now_playing_description">S\'està reproduint: OK reprodueix o pausa, esquerra i dreta salten, mantén OK per obrir l\'app</string>
 </resources>
