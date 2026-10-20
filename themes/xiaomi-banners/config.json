@@ -1,0 +1,12 @@
+{
+  "app_banners": [
+    "com.xiaomi.voicecontrol=banner_xiaomi_xiaoai",
+    "com.xiaomi.mitv.appstore=banner_xiaomi_appstore",
+    "com.xiaomi.mitv.smartshare=banner_xiaomi_cast",
+    "com.xiaomi.tweather=banner_xiaomi_weather",
+    "com.xiaomi.mitv.calendar=banner_xiaomi_calendar",
+    "com.xiaomi.mitv.tvmanager=banner_xiaomi_tvmanager",
+    "com.xiaomi.mitv.settings=banner_xiaomi_settings",
+    "com.xiaomi.mitv.mediaexplorer=banner_xiaomi_player"
+  ]
+}

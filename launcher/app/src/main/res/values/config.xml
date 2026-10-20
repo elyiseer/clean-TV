@@ -43,7 +43,8 @@
     <string-array name="app_labels">
     </string-array>
     <!-- A tile's artwork instead of the app's banner: "package=drawable", a banner_* drawable bundled with the
-         launcher (res/drawable). banner_tv is a magenta field with the Live TV glyph. -->
+         launcher (res/drawable, res/drawable-nodpi). banner_tv is a magenta field with the Live TV glyph; the
+         banner_xiaomi_* set covers Xiaomi TV system apps that ship no banner (themes/xiaomi-banners). -->
     <string-array name="app_banners">
     </string-array>
 
