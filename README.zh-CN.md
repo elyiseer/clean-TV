@@ -87,7 +87,7 @@
 
 清理清单面向 **Android TV / Google TV**；当前桌面 APK 要求 **Android 8.0（API 26）或更高版本**。社区提供了多种电视与电视盒子的配置；其中一些设备运行的 Android 版本低于桌面的最低要求，清理清单不代表桌面可安装。请在[机型清单](examples/README.md)中核对型号、地区和固件，阅读对应目录的说明，再使用停用列表。
 
-- Samsung Tizen 和 LG webOS 不能直接运行本项目的 Android 桌面；社区移植项目可参考[社区作品](SHOWCASE.md)。
+- Samsung Tizen 和 LG webOS 不能直接运行本项目的 Android 桌面；[docs/devices/samsung-tizen.md](docs/devices/samsung-tizen.md) 记录了一台 2021 年 Tizen 机型在局域网里暴露的接口（没有 ADB，因而无法停用应用），社区移植项目可参考[社区作品](SHOWCASE.md)。
 - Fire TV 的清理记录可供手动适配；[操作提示词](PROMPT.md)不适用于 Fire TV，Fire OS 也限制替换默认桌面。
 - 部分中国大陆版电视会拒绝侧载 APK 或安装第三方 HOME 桌面，已记录的 TCL 机型只是其中的例子。不能仅凭品牌判断兼容性。
 - 没有现成清单时，可以让助手检查实际设备，并按[贡献指南](CONTRIBUTING.md)提交经过验证的机型记录。

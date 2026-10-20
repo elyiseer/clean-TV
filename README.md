@@ -110,9 +110,11 @@ phoning home, no apps you never asked for.
 ## Supported TVs
 
 Anything running **Android TV** or **Google TV**. Samsung (Tizen) and LG (webOS) run different
-systems; see [SHOWCASE.md](SHOWCASE.md) for a webOS port. **Fire TV** takes the debloat half only,
-since Fire OS will not hand Home to a third-party launcher. A few China-market TCL sets refuse to
-install any launcher at all; their lists say so in the header.
+systems; see [SHOWCASE.md](SHOWCASE.md) for a webOS port, and
+[docs/devices/samsung-tizen.md](docs/devices/samsung-tizen.md) for what a 2021 Samsung set answers
+over Wi-Fi (no ADB, so no `pm disable-user`) if you are weighing a Tizen port. **Fire TV** takes the
+debloat half only, since Fire OS will not hand Home to a third-party launcher. A few China-market TCL
+sets refuse to install any launcher at all; their lists say so in the header.
 
 Tested lists from contributors, one folder per model in [`examples/`](examples/):
 
