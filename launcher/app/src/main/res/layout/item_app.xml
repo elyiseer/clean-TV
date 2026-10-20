@@ -24,6 +24,19 @@
             android:contentDescription="@null" />
 
         <ImageView
+            android:id="@+id/protectedBadge"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="7dp"
+            android:background="@drawable/lock_badge_bg"
+            android:contentDescription="@string/parental_protected_badge"
+            android:elevation="2dp"
+            android:padding="4dp"
+            android:src="@drawable/ic_lock"
+            android:visibility="gone" />
+
+        <ImageView
             android:id="@+id/icon"
             android:layout_width="48dp"
             android:layout_height="48dp"

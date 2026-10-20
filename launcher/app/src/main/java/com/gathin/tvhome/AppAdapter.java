@@ -1,6 +1,5 @@
 package com.gathin.tvhome;
 
-import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -26,7 +25,6 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -56,6 +54,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         void onLibraryRequested();
         void onLibraryFocused();
         void onLibraryUp();
+        void onApplicationLaunch(Intent intent, String packageName, String label, AppAccessPolicy.Path path);
+        void onApplicationManagement(String packageName, String label, AppAccessPolicy.Path path, Runnable action);
     }
 
     static final class Entry {
@@ -181,6 +181,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private int docked, emptySlots;
     /** Never shown as tiles (res/values/config.xml, hidden_apps). */
     private final Set<String> hidden;
+    /** Packages protected by the optional parental PIN. */
+    private Set<String> protectedApps = Collections.emptySet();
     private final boolean animations;
     private final boolean advancedEffects;
     private final boolean showLibrary;
@@ -372,6 +374,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             h.icon.setImageDrawable(null);
             h.card.setOnClickListener(null);
             h.card.setOnLongClickListener(null);
+            View lock = h.card.findViewById(R.id.protectedBadge);
+            if (lock != null) lock.setVisibility(View.GONE);
             return;
         }
         h.card.setVisibility(View.VISIBLE);
@@ -403,12 +407,15 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         h.card.setOnLongClickListener(v -> {
             Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + e.pkg));
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                ctx.startActivity(i);
-            } catch (ActivityNotFoundException ignored) {
-            }
+            listener.onApplicationManagement(e.pkg, e.label, AppAccessPolicy.Path.APP_INFO, () -> {
+                try { ctx.startActivity(i); }
+                catch (ActivityNotFoundException ignored) { }
+            });
             return true;
         });
+        View lock = h.card.findViewById(R.id.protectedBadge);
+        if (lock != null) lock.setVisibility(e.kind != Entry.HOME_SETTINGS && protectedApps.contains(e.pkg)
+                ? View.VISIBLE : View.GONE);
     }
 
     /** Opens the tile's activity by explicit component, with no extras: a card can name nothing else. */
@@ -424,14 +431,13 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         // TV apps launch with the same leanback intent as from the stock launcher or the remote, so an app
         // already running resumes instead of restarting; only phone apps added from the library use plain MAIN.
         if (leanbackPackages.contains(e.pkg)) i.addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
-        try {
-            ctx.startActivity(i);
-            if (advancedEffects && ctx instanceof Activity) {
-                ((Activity) ctx).overridePendingTransition(R.anim.app_open_enter, R.anim.app_open_exit);
-            }
-        } catch (Exception ex) {
-            Toast.makeText(ctx, ctx.getString(R.string.cant_open, e.label), Toast.LENGTH_SHORT).show();
-        }
+        listener.onApplicationLaunch(i, e.pkg, e.label,
+                e.kind == Entry.CARD ? AppAccessPolicy.Path.MODULE_CARD : AppAccessPolicy.Path.HOME_TILE);
+    }
+
+    void setProtectedApps(Set<String> packages) {
+        protectedApps = packages == null ? Collections.emptySet() : new HashSet<>(packages);
+        notifyDataSetChanged();
     }
 
     @Override
@@ -448,6 +454,15 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     boolean containsPackage(String pkg) {
         for (Entry entry : items) if (entry.pkg.equals(pkg)) return true;
         return false;
+    }
+
+    void addParentalTargets(Map<String, String> targets) {
+        for (Entry entry : items) {
+            boolean appTile = entry.kind == Entry.APP || entry.kind == Entry.CARD;
+            if (appTile && !ctx.getPackageName().equals(entry.pkg) && !targets.containsKey(entry.pkg)) {
+                targets.put(entry.pkg, entry.label);
+            }
+        }
     }
 
     @Override

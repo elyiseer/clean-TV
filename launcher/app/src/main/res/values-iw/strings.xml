@@ -88,4 +88,33 @@
         <item quantity="other">%1$d אפליקציות</item>
     </plurals>
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="parental_control">בקרת הורים</string>
+    <string name="parental_new_pin_title">יצירת קוד PIN לבקרת הורים</string>
+    <string name="parental_confirm_pin_title">אישור קוד ה-PIN</string>
+    <string name="parental_enter_pin_title">הזנת קוד ה-PIN של בקרת ההורים</string>
+    <string name="parental_pin_help">השתמשו בחצים ובאישור כדי להזין את קוד ה-PIN. לחצו על חזרה לביטול.</string>
+    <string name="parental_pin_invalid">קוד ה-PIN חייב להכיל 4 עד 6 ספרות.</string>
+    <string name="parental_pin_incorrect">קוד ה-PIN שגוי.</string>
+    <string name="parental_pin_mismatch">קודי ה-PIN אינם תואמים. נסו שוב.</string>
+    <string name="parental_pin_locked">יותר מדי ניסיונות. נסו שוב בעוד %1$d שניות.</string>
+    <string name="parental_pin_saved">קוד ה-PIN של בקרת ההורים נשמר.</string>
+    <string name="parental_pin_changed">קוד ה-PIN של בקרת ההורים שונה.</string>
+    <string name="parental_state_error">לא ניתן לקרוא או לשמור את הגדרות בקרת ההורים. הפעולה המבוקשת נחסמה.</string>
+    <string name="parental_apps_title">אפליקציות מוגנות</string>
+    <string name="parental_apps_help">בחרו אפליקציות שיידרשו להזין PIN כדי לפתוח או לנהל אותן.</string>
+    <string name="parental_apps_empty">לא נמצאו אפליקציות שניתן לפתוח.</string>
+    <string name="parental_apps_saved">האפליקציות המוגנות נשמרו.</string>
+    <string name="parental_save">שמירת אפליקציות מוגנות</string>
+    <string name="parental_change_pin">שינוי PIN</string>
+    <string name="parental_disable">כיבוי בקרת ההורים</string>
+    <string name="parental_disable_title">לכבות את בקרת ההורים?</string>
+    <string name="parental_disable_message">קוד ה-PIN וכל ההגנות על האפליקציות יוסרו.</string>
+    <string name="parental_disable_confirm">כיבוי</string>
+    <string name="parental_cancel">ביטול</string>
+    <string name="parental_confirm">אישור</string>
+    <string name="parental_delete_digit">מחיקת הספרה האחרונה</string>
+    <string name="parental_unlock_app">הזינו את קוד ה-PIN כדי לפתוח את %1$s.</string>
+    <string name="parental_protected_badge">מוגנת באמצעות PIN</string>
+    <string name="parental_disabled">בקרת ההורים כובתה.</string>
+    <string name="library_state_with_protection">%1$s · מוגנת</string>
 </resources>

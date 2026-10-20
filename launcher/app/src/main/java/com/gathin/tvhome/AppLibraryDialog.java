@@ -1,6 +1,5 @@
 package com.gathin.tvhome;
 
-import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -42,7 +41,7 @@ import java.util.function.Predicate;
 
 /** On-demand installed-app picker. Uses the launcher's glass resources; no backdrop capture or blur. */
 final class AppLibraryDialog {
-    private final Activity activity;
+    private final MainActivity activity;
     private final Predicate<String> onHome;
     private final Runnable changed;
     private final LinearLayout panel;
@@ -108,7 +107,7 @@ final class AppLibraryDialog {
         if (popup.isShowing()) popup.update(width, height);
     }
 
-    AppLibraryDialog(Activity activity, boolean animations, boolean reducedMotion, Predicate<String> onHome, Runnable changed, Runnable dismissed) {
+    AppLibraryDialog(MainActivity activity, boolean animations, boolean reducedMotion, Predicate<String> onHome, Runnable changed, Runnable dismissed) {
         this.activity = activity;
         this.animations = animations;
         this.rtl = activity.getResources().getBoolean(R.bool.rtl_app_grid);
@@ -305,6 +304,12 @@ final class AppLibraryDialog {
     }
 
     private void changeHome(ResolveInfo app, boolean add) {
+        String pkg = app.activityInfo.packageName;
+        activity.runProtectedManagement(pkg, label(app), AppAccessPolicy.Path.LIBRARY_MANAGEMENT,
+                () -> changeHomeAuthorized(app, add));
+    }
+
+    private void changeHomeAuthorized(ResolveInfo app, boolean add) {
         if (!LibraryApps.save(activity, app.activityInfo.packageName, add)) {
             Toast.makeText(activity, R.string.library_save_failed, Toast.LENGTH_LONG).show();
             return;
@@ -335,17 +340,13 @@ final class AppLibraryDialog {
         refresh();
     }
 
-    private void open(ResolveInfo app) {
-        close();
+    private void open(ResolveInfo app, AppAccessPolicy.Path path) {
         Intent intent = new Intent(Intent.ACTION_MAIN).setComponent(
                 new ComponentName(app.activityInfo.packageName, app.activityInfo.name));
         // TV apps keep the leanback launch intent, so an app already running resumes instead of restarting.
         if (tvPackages.contains(app.activityInfo.packageName)) intent.addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        try { activity.startActivity(intent); }
-        catch (ActivityNotFoundException | SecurityException e) {
-            Toast.makeText(activity, activity.getString(R.string.cant_open, label(app)), Toast.LENGTH_SHORT).show();
-        }
+        activity.requestApplicationLaunch(intent, app.activityInfo.packageName, label(app), path, this::close);
     }
 
     private void showActions(ResolveInfo app, View anchor) {
@@ -365,18 +366,19 @@ final class AppLibraryDialog {
             if (actionPopup == menu) actionPopup = null;
             restoreCardFocus();
         });
-        addAction(rows, R.string.library_open, () -> open(app));
+        addAction(rows, R.string.library_open, () -> open(app, AppAccessPolicy.Path.APP_LIBRARY_MENU));
         boolean home = onHome.test(pkg);
         addAction(rows, home ? R.string.library_remove_shortcut : R.string.library_add_home,
                 () -> changeHome(app, !home));
-        addAction(rows, R.string.library_app_info, () -> {
+        addAction(rows, R.string.library_app_info, () -> activity.runProtectedManagement(
+                pkg, label(app), AppAccessPolicy.Path.APP_INFO, () -> {
             close();
             try {
                 activity.startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg)));
             } catch (ActivityNotFoundException | SecurityException e) {
                 Toast.makeText(activity, activity.getString(R.string.cant_open, label(app)), Toast.LENGTH_SHORT).show();
             }
-        });
+        }));
         int menuWidth = dp(220);
         for (int i = 0; i < rows.getChildCount(); i++) {
             TextView title = rows.getChildAt(i).findViewById(R.id.title);
@@ -482,7 +484,11 @@ final class AppLibraryDialog {
             TextView status = holder.itemView.findViewById(R.id.status);
             boolean home = onHome.test(pkg);
             boolean recent = LibraryApps.recent(installTimes.getOrDefault(pkg, 0L), catalogTime);
-            status.setText(home ? R.string.library_on_home : recent ? R.string.library_recent : R.string.library_add_home);
+            int baseStatus = home ? R.string.library_on_home : recent ? R.string.library_recent : R.string.library_add_home;
+            String state = activity.isApplicationProtected(pkg)
+                    ? activity.getString(R.string.library_state_with_protection, activity.getString(baseStatus))
+                    : activity.getString(baseStatus);
+            status.setText(state);
             status.setVisibility(View.VISIBLE);
             holder.itemView.setBackground(surface(home ? 0x1475BBA4 : 0x0CFFFFFF, 18));
             View check = holder.itemView.findViewById(R.id.dot);
@@ -492,7 +498,7 @@ final class AppLibraryDialog {
             else check.setBackground(surface(0xFF70D9A0, 8));
             check.setVisibility(home || recent ? View.VISIBLE : View.GONE);
             holder.itemView.setOnClickListener(v -> {
-                if (onHome.test(pkg)) open(app);
+                if (onHome.test(pkg)) open(app, AppAccessPolicy.Path.APP_LIBRARY);
                 else changeHome(app, true);
             });
             holder.itemView.setOnLongClickListener(v -> { showActions(app, v); return true; });

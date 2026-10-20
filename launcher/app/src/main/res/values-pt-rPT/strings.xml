@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="parental_control">Controlo parental</string>
+    <string name="parental_new_pin_title">Criar PIN parental</string>
+    <string name="parental_confirm_pin_title">Confirmar PIN</string>
+    <string name="parental_enter_pin_title">Introduza o PIN parental</string>
+    <string name="parental_pin_help">Use as setas e OK para introduzir o PIN. Prima Voltar para cancelar.</string>
+    <string name="parental_pin_invalid">O PIN tem de ter 4 a 6 algarismos.</string>
+    <string name="parental_pin_incorrect">O PIN está incorreto.</string>
+    <string name="parental_pin_mismatch">Os PIN não coincidem. Tente novamente.</string>
+    <string name="parental_pin_locked">Demasiadas tentativas. Tente novamente dentro de %1$d segundos.</string>
+    <string name="parental_pin_saved">PIN parental guardado.</string>
+    <string name="parental_pin_changed">PIN parental alterado.</string>
+    <string name="parental_state_error">Não foi possível ler ou guardar as definições parentais. A ação foi bloqueada.</string>
+    <string name="parental_apps_title">Aplicações protegidas</string>
+    <string name="parental_apps_help">Selecione as aplicações que pedem o PIN para abrir ou gerir.</string>
+    <string name="parental_apps_empty">Não foram encontradas aplicações que possam ser abertas.</string>
+    <string name="parental_apps_saved">Aplicações protegidas guardadas.</string>
+    <string name="parental_save">Guardar aplicações protegidas</string>
+    <string name="parental_change_pin">Alterar PIN</string>
+    <string name="parental_disable">Desativar controlo parental</string>
+    <string name="parental_disable_title">Desativar o controlo parental?</string>
+    <string name="parental_disable_message">O PIN e todas as proteções de aplicações serão removidos.</string>
+    <string name="parental_disable_confirm">Desativar</string>
+    <string name="parental_cancel">Cancelar</string>
+    <string name="parental_confirm">OK</string>
+    <string name="parental_delete_digit">Apagar último algarismo</string>
+    <string name="parental_unlock_app">Introduza o PIN para abrir %1$s.</string>
+    <string name="parental_protected_badge">Protegida por PIN</string>
+    <string name="parental_disabled">Controlo parental desativado.</string>
+    <string name="library_state_with_protection">%1$s · Protegida</string>
+</resources>

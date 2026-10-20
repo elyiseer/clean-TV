@@ -90,4 +90,33 @@
     </plurals>
     <!-- The greeting, then greeting_name: "Good morning, Mr. Trịnh". -->
     <string name="greeting_with_name">%1$s, %2$s</string>
+    <string name="parental_control">Parental controls</string>
+    <string name="parental_new_pin_title">Create a parental PIN</string>
+    <string name="parental_confirm_pin_title">Confirm the PIN</string>
+    <string name="parental_enter_pin_title">Enter the parental PIN</string>
+    <string name="parental_pin_help">Use the arrows and OK to enter the PIN. Press Back to cancel.</string>
+    <string name="parental_pin_invalid">The PIN must contain 4 to 6 digits.</string>
+    <string name="parental_pin_incorrect">That PIN is incorrect.</string>
+    <string name="parental_pin_mismatch">The PINs do not match. Try again.</string>
+    <string name="parental_pin_locked">Too many attempts. Try again in %1$d seconds.</string>
+    <string name="parental_pin_saved">Parental PIN saved.</string>
+    <string name="parental_pin_changed">Parental PIN changed.</string>
+    <string name="parental_state_error">Parental settings could not be read or saved. The requested action was blocked.</string>
+    <string name="parental_apps_title">Protected apps</string>
+    <string name="parental_apps_help">Select apps that require the PIN to open or manage.</string>
+    <string name="parental_apps_empty">No launchable apps were found.</string>
+    <string name="parental_apps_saved">Protected apps saved.</string>
+    <string name="parental_save">Save protected apps</string>
+    <string name="parental_change_pin">Change PIN</string>
+    <string name="parental_disable">Turn off parental controls</string>
+    <string name="parental_disable_title">Turn off parental controls?</string>
+    <string name="parental_disable_message">The PIN and all app protections will be removed.</string>
+    <string name="parental_disable_confirm">Turn off</string>
+    <string name="parental_cancel">Cancel</string>
+    <string name="parental_confirm">OK</string>
+    <string name="parental_delete_digit">Delete last digit</string>
+    <string name="parental_unlock_app">Enter the PIN to open %1$s.</string>
+    <string name="parental_protected_badge">Protected by PIN</string>
+    <string name="parental_disabled">Parental controls turned off.</string>
+    <string name="library_state_with_protection">%1$s · Protected</string>
 </resources>

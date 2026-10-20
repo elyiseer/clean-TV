@@ -2,6 +2,7 @@ package com.gathin.tvhome;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
+import android.app.AlertDialog;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
@@ -11,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -54,7 +56,9 @@ import android.view.animation.LayoutAnimationController;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.CheckBox;
 import android.widget.PopupWindow;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -70,12 +74,16 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * tvOS style home: black, a pinned dock row, an app grid, and one glass highlight that springs between tiles.
@@ -97,6 +105,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private String sourcePanelAction;
 
     private AppAdapter adapter;
+    private ParentalControlsStore parentalStore;
+    private ParentalControlsStore.Snapshot parentalSnapshot;
     private RecyclerView grid;
     private FrameLayout root;
     private WallpaperPlayer wallpaperPlayer;
@@ -245,6 +255,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        parentalStore = new ParentalControlsStore(new File(getFilesDir(), "parental-controls.properties"));
+        parentalSnapshot = parentalStore.snapshot();
         density = getResources().getDisplayMetrics().density;
         // config.xml, overlaid by config.json from a pushed theme (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
@@ -359,6 +371,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     AnimationUtils.loadAnimation(this, enterAnim), enterDelay));
         }
         adapter = new AppAdapter(this, this, COLUMNS, cfg);
+        adapter.setProtectedApps(parentalSnapshot.protectedApps);
         dockApps = cfg.dockApps;
         fillDockLeavesSlots = !cfg.fillDock;
         adapter.setSavedOrder(Order.ranks(Order.load(Order.file(this)), dockApps));
@@ -985,6 +998,380 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         openPopup = appLibrary.popup;
         appLibrary.show();
+    }
+
+    @Override
+    public void onApplicationLaunch(Intent intent, String packageName, String label, AppAccessPolicy.Path path) {
+        requestApplicationLaunch(intent, packageName, label, path, null);
+    }
+
+    @Override
+    public void onApplicationManagement(String packageName, String label, AppAccessPolicy.Path path, Runnable action) {
+        runProtectedManagement(packageName, label, path, action);
+    }
+
+    void requestApplicationLaunch(Intent intent, String packageName, String label, AppAccessPolicy.Path path,
+                                  Runnable beforeLaunch) {
+        runProtectedOperation(packageName, label, path, false, () -> {
+            if (beforeLaunch != null) beforeLaunch.run();
+            startApplicationIntent(intent, label, true);
+        });
+    }
+
+    void runProtectedManagement(String packageName, String label, AppAccessPolicy.Path path, Runnable action) {
+        runProtectedOperation(packageName, label, path, true, action);
+    }
+
+    boolean isApplicationProtected(String packageName) {
+        return parentalSnapshot != null && parentalSnapshot.protectedApps.contains(packageName);
+    }
+
+    private interface PinHandler { void onPin(char[] pin); }
+
+    private void refreshParentalSnapshot() {
+        parentalSnapshot = parentalStore.snapshot();
+        if (adapter != null) adapter.setProtectedApps(parentalSnapshot.protectedApps);
+        if (appLibrary != null) appLibrary.refresh();
+    }
+
+    private void showParentalStateError() {
+        Toast.makeText(this, R.string.parental_state_error, Toast.LENGTH_LONG).show();
+    }
+
+    private void runProtectedOperation(String packageName, String label, AppAccessPolicy.Path path,
+                                       boolean management, Runnable action) {
+        if (action == null) return;
+        ParentalControlsStore.Snapshot state = parentalSnapshot;
+        AppAccessPolicy.Decision decision = management
+                ? AppAccessPolicy.forManagement(state, packageName, false, path)
+                : AppAccessPolicy.forOpen(state, packageName, false, path);
+        if (decision == AppAccessPolicy.Decision.DENY_STORAGE_ERROR) {
+            showParentalStateError();
+        } else if (decision == AppAccessPolicy.Decision.AUTHENTICATION_REQUIRED) {
+            authenticatePin(getString(R.string.parental_unlock_app, label), action);
+        } else {
+            action.run();
+        }
+    }
+
+    private void authenticatePin(String prompt, Runnable onAuthenticated) {
+        if (parentalSnapshot == null || !parentalSnapshot.storageHealthy || !parentalSnapshot.pinConfigured) {
+            showParentalStateError();
+            return;
+        }
+        showPinEntry(prompt, pin -> {
+            ParentalControlsStore.PinResult result = parentalStore.verifyPin(pin, System.currentTimeMillis());
+            refreshParentalSnapshot();
+            if (result == ParentalControlsStore.PinResult.MATCH) {
+                onAuthenticated.run();
+            } else if (result == ParentalControlsStore.PinResult.FAILED) {
+                Toast.makeText(this, R.string.parental_pin_incorrect, Toast.LENGTH_SHORT).show();
+                authenticatePin(prompt, onAuthenticated);
+            } else if (result == ParentalControlsStore.PinResult.LOCKED) {
+                long remaining = parentalStore.lockRemainingMs(System.currentTimeMillis());
+                if (remaining == Long.MAX_VALUE) showParentalStateError();
+                else Toast.makeText(this, getString(R.string.parental_pin_locked,
+                        Math.max(1L, (remaining + 999L) / 1000L)), Toast.LENGTH_LONG).show();
+            } else {
+                showParentalStateError();
+            }
+        }, null);
+    }
+
+    private void createNewPin(Runnable onSaved, Runnable onCancel) {
+        createNewPin(onSaved, onCancel, R.string.parental_pin_saved);
+    }
+
+    private void createNewPin(Runnable onSaved, Runnable onCancel, int successMessage) {
+        showPinEntry(getString(R.string.parental_new_pin_title), first -> {
+            char[] firstPin = first.clone();
+            showPinEntry(getString(R.string.parental_confirm_pin_title), second -> {
+                boolean matches = ParentalControlsStore.samePin(firstPin, second);
+                if (!matches) {
+                    Arrays.fill(firstPin, '\0');
+                    Toast.makeText(this, R.string.parental_pin_mismatch, Toast.LENGTH_SHORT).show();
+                    createNewPin(onSaved, onCancel, successMessage);
+                    return;
+                }
+                boolean saved = parentalStore.setPin(firstPin);
+                Arrays.fill(firstPin, '\0');
+                refreshParentalSnapshot();
+                if (saved && parentalSnapshot.storageHealthy && parentalSnapshot.pinConfigured) {
+                    Toast.makeText(this, successMessage, Toast.LENGTH_SHORT).show();
+                    onSaved.run();
+                } else showParentalStateError();
+            }, () -> {
+                Arrays.fill(firstPin, '\0');
+                if (onCancel != null) onCancel.run();
+            });
+        }, onCancel);
+    }
+
+    /** Numeric keypad built for D-pad/OK; PIN digits are never sent to an IME or written to logs. */
+    private void showPinEntry(String titleText, PinHandler handler, Runnable onCancel) {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        int padding = parentalDp(22);
+        panel.setPadding(padding, padding, padding, padding);
+        panel.setBackgroundResource(R.drawable.glass_panel);
+
+        TextView title = parentalText(titleText, 22);
+        panel.addView(title, new LinearLayout.LayoutParams(-1, -2));
+        TextView help = parentalText(getString(R.string.parental_pin_help), 14);
+        help.setTextColor(0xFFB8B8BE);
+        LinearLayout.LayoutParams helpParams = new LinearLayout.LayoutParams(-1, -2);
+        helpParams.topMargin = parentalDp(6);
+        panel.addView(help, helpParams);
+        TextView display = parentalText(" ", 27);
+        display.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams displayParams = new LinearLayout.LayoutParams(-1, -2);
+        displayParams.topMargin = parentalDp(6);
+        displayParams.bottomMargin = parentalDp(8);
+        panel.addView(display, displayParams);
+
+        char[] digits = new char[ParentalControlsStore.PIN_MAX];
+        int[] length = {0};
+        Runnable updateDisplay = () -> {
+            StringBuilder bullets = new StringBuilder();
+            for (int i = 0; i < length[0]; i++) bullets.append("● ");
+            display.setText(bullets.length() == 0 ? " " : bullets.substring(0, bullets.length() - 1));
+        };
+        String[][] keys = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"},
+                {"delete", "0", "confirm"}};
+        TextView firstKey = null;
+        for (String[] rowKeys : keys) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER);
+            for (String key : rowKeys) {
+                String label = "delete".equals(key) ? "⌫"
+                        : "confirm".equals(key) ? getString(R.string.parental_confirm) : key;
+                TextView button = parentalKey(label);
+                if ("delete".equals(key)) button.setContentDescription(getString(R.string.parental_delete_digit));
+                button.setOnClickListener(v -> {
+                    if ("delete".equals(key)) {
+                        if (length[0] > 0) digits[--length[0]] = '\0';
+                        updateDisplay.run();
+                    } else if ("confirm".equals(key)) {
+                        if (length[0] < ParentalControlsStore.PIN_MIN) {
+                            Toast.makeText(this, R.string.parental_pin_invalid, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        char[] entered = Arrays.copyOf(digits, length[0]);
+                        Arrays.fill(digits, '\0');
+                        length[0] = 0;
+                        dialog.dismiss();
+                        try { handler.onPin(entered); }
+                        finally { Arrays.fill(entered, '\0'); }
+                    } else if (length[0] < digits.length) {
+                        digits[length[0]++] = key.charAt(0);
+                        updateDisplay.run();
+                    }
+                });
+                if (firstKey == null) firstKey = button;
+                LinearLayout.LayoutParams keyParams = new LinearLayout.LayoutParams(parentalDp(76), parentalDp(50));
+                keyParams.setMargins(parentalDp(4), parentalDp(4), parentalDp(4), parentalDp(4));
+                row.addView(button, keyParams);
+            }
+            panel.addView(row, new LinearLayout.LayoutParams(-1, -2));
+        }
+        dialog.setContentView(panel);
+        dialog.setCancelable(true);
+        dialog.setOnCancelListener(d -> {
+            Arrays.fill(digits, '\0');
+            if (onCancel != null) onCancel.run();
+        });
+        dialog.setOnDismissListener(d -> Arrays.fill(digits, '\0'));
+        dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(parentalDp(300), ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+        if (firstKey != null) firstKey.requestFocus();
+    }
+
+    private TextView parentalText(String text, int sizeSp) {
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextColor(Color.WHITE);
+        view.setTextSize(sizeSp);
+        view.setTypeface(getResources().getFont(R.font.outfit));
+        view.setIncludeFontPadding(false);
+        return view;
+    }
+
+    private TextView parentalKey(String label) {
+        TextView key = parentalText(label, 19);
+        key.setGravity(Gravity.CENTER);
+        key.setFocusable(true);
+        key.setFocusableInTouchMode(true);
+        key.setBackgroundResource(R.drawable.parental_key_bg);
+        return key;
+    }
+
+    private int parentalDp(float value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private void showParentalControl() {
+        refreshParentalSnapshot();
+        if (!parentalSnapshot.storageHealthy) {
+            showParentalStateError();
+        } else if (!parentalSnapshot.pinConfigured) {
+            createNewPin(this::showProtectedApplicationsDialog, null);
+        } else {
+            authenticatePin(getString(R.string.parental_enter_pin_title), this::showProtectedApplicationsDialog);
+        }
+    }
+
+    private void showProtectedApplicationsDialog() {
+        refreshParentalSnapshot();
+        if (!parentalSnapshot.storageHealthy || !parentalSnapshot.pinConfigured) {
+            showParentalStateError();
+            return;
+        }
+        List<Map.Entry<String, String>> apps = parentalApplications();
+        Set<String> visiblePackages = new HashSet<>();
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        int padding = parentalDp(20);
+        panel.setPadding(padding, padding, padding, padding);
+        panel.setBackgroundResource(R.drawable.glass_panel);
+
+        TextView title = parentalText(getString(R.string.parental_apps_title), 22);
+        panel.addView(title, new LinearLayout.LayoutParams(-1, -2));
+        TextView help = parentalText(getString(R.string.parental_apps_help), 14);
+        help.setTextColor(0xFFB8B8BE);
+        LinearLayout.LayoutParams helpParams = new LinearLayout.LayoutParams(-1, -2);
+        helpParams.topMargin = parentalDp(6);
+        panel.addView(help, helpParams);
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        LinearLayout choices = new LinearLayout(this);
+        choices.setOrientation(LinearLayout.VERTICAL);
+        List<CheckBox> checks = new ArrayList<>();
+        List<String> packages = new ArrayList<>();
+        for (Map.Entry<String, String> app : apps) {
+            String pkg = app.getKey();
+            visiblePackages.add(pkg);
+            CheckBox check = new CheckBox(this);
+            check.setText(app.getValue());
+            check.setTextColor(Color.WHITE);
+            check.setTextSize(16);
+            check.setFocusable(true);
+            check.setFocusableInTouchMode(true);
+            check.setBackgroundResource(R.drawable.parental_key_bg);
+            check.setPadding(parentalDp(10), 0, parentalDp(10), 0);
+            check.setChecked(parentalSnapshot.protectedApps.contains(pkg));
+            choices.addView(check, new LinearLayout.LayoutParams(-1, parentalDp(48)));
+            checks.add(check);
+            packages.add(pkg);
+        }
+        if (apps.isEmpty()) {
+            TextView empty = parentalText(getString(R.string.parental_apps_empty), 16);
+            empty.setTextColor(0xFFB8B8BE);
+            empty.setPadding(0, parentalDp(14), 0, parentalDp(14));
+            choices.addView(empty, new LinearLayout.LayoutParams(-1, -2));
+        }
+        scroll.addView(choices, new ScrollView.LayoutParams(-1, -2));
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(-1, parentalDp(300));
+        scrollParams.topMargin = parentalDp(10);
+        scrollParams.bottomMargin = parentalDp(10);
+        panel.addView(scroll, scrollParams);
+
+        TextView save = parentalAction(getString(R.string.parental_save));
+        save.setOnClickListener(v -> {
+            Set<String> next = new HashSet<>(parentalSnapshot.protectedApps);
+            next.removeAll(visiblePackages);
+            for (int i = 0; i < checks.size(); i++) if (checks.get(i).isChecked()) next.add(packages.get(i));
+            if (parentalStore.saveProtectedApps(next)) {
+                refreshParentalSnapshot();
+                Toast.makeText(this, R.string.parental_apps_saved, Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            } else showParentalStateError();
+        });
+        addParentalAction(panel, save);
+
+        TextView changePin = parentalAction(getString(R.string.parental_change_pin));
+        changePin.setOnClickListener(v -> {
+            dialog.dismiss();
+            createNewPin(() -> {
+                showProtectedApplicationsDialog();
+            }, this::showProtectedApplicationsDialog, R.string.parental_pin_changed);
+        });
+        addParentalAction(panel, changePin);
+
+        TextView disable = parentalAction(getString(R.string.parental_disable));
+        disable.setOnClickListener(v -> {
+            dialog.dismiss();
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.parental_disable_title)
+                    .setMessage(R.string.parental_disable_message)
+                    .setNegativeButton(R.string.parental_cancel, null)
+                    .setPositiveButton(R.string.parental_disable_confirm, (d, which) -> {
+                        if (parentalStore.clear()) {
+                            refreshParentalSnapshot();
+                            Toast.makeText(this, R.string.parental_disabled, Toast.LENGTH_SHORT).show();
+                        } else showParentalStateError();
+                    })
+                    .show();
+        });
+        addParentalAction(panel, disable);
+
+        dialog.setContentView(panel);
+        dialog.setCancelable(true);
+        dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            int width = Math.min((int) (getResources().getDisplayMetrics().widthPixels * 0.82f), parentalDp(650));
+            window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+        if (!checks.isEmpty()) checks.get(0).requestFocus();
+        else save.requestFocus();
+    }
+
+    private TextView parentalAction(String text) {
+        TextView action = parentalText(text, 16);
+        action.setGravity(Gravity.CENTER_VERTICAL);
+        action.setFocusable(true);
+        action.setFocusableInTouchMode(true);
+        action.setBackgroundResource(R.drawable.parental_key_bg);
+        action.setPadding(parentalDp(12), 0, parentalDp(12), 0);
+        return action;
+    }
+
+    private void addParentalAction(LinearLayout panel, TextView action) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, parentalDp(46));
+        params.topMargin = parentalDp(4);
+        panel.addView(action, params);
+    }
+
+    private List<Map.Entry<String, String>> parentalApplications() {
+        Map<String, String> byPackage = new TreeMap<>();
+        addParentalApplications(byPackage, new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER));
+        addParentalApplications(byPackage, new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER));
+        if (adapter != null) adapter.addParentalTargets(byPackage);
+        List<Map.Entry<String, String>> apps = new ArrayList<>(byPackage.entrySet());
+        apps.sort(Comparator.comparing(Map.Entry::getValue, String.CASE_INSENSITIVE_ORDER));
+        return apps;
+    }
+
+    private void addParentalApplications(Map<String, String> byPackage, Intent query) {
+        List<ResolveInfo> found = getPackageManager().queryIntentActivities(query, 0);
+        for (ResolveInfo info : found) {
+            if (info.activityInfo == null || !info.activityInfo.exported
+                    || getPackageName().equals(info.activityInfo.packageName)) continue;
+            String pkg = info.activityInfo.packageName;
+            if (byPackage.containsKey(pkg)) continue;
+            try { byPackage.put(pkg, String.valueOf(info.loadLabel(getPackageManager()))); }
+            catch (RuntimeException unavailable) { byPackage.put(pkg, pkg); }
+        }
     }
 
     @Override
@@ -1728,19 +2115,48 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         Intent i = new Intent(sourcePanelAction);
         ComponentName c = ComponentName.unflattenFromString(sourcePanelService);
         if (c != null) i.setComponent(c);
-        try {
-            startService(i);
-        } catch (Exception e) {
-            Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
-        }
+        List<String> targets = targetServicePackages(i);
+        runAuthorizedTargets(targets, targetQueryMayOmitProtectedApp(i), () -> {
+            try { startService(i); }
+            catch (Exception e) { Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show(); }
+        });
     }
 
     private void open(Intent i) {
+        open(i, true);
+    }
+
+    private boolean open(Intent i, boolean showError) {
+        return open(i, showError, null);
+    }
+
+    private boolean open(Intent i, boolean showError, Runnable onNotFound) {
+        if (i == null) {
+            if (showError) Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (parentalSnapshot == null || !parentalSnapshot.storageHealthy) {
+            showParentalStateError();
+            return true;
+        }
+        List<String> targets = targetActivityPackages(i);
+        runAuthorizedTargets(targets, targetQueryMayOmitProtectedApp(i), () -> {
+            if (!startIntent(i, showError) && onNotFound != null) onNotFound.run();
+        });
+        return true;
+    }
+
+    private boolean startIntent(Intent i, boolean showError) {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             startActivity(i);
+            return true;
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+            if (showError) Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+            return false;
+        } catch (SecurityException e) {
+            if (showError) Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+            return false;
         }
     }
 
@@ -1751,16 +2167,91 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         Uri uri = TvContract.buildChannelUriForPassthroughInput(inputId);
         Intent view = new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "vnd.android.cursor.item/channel")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try {
-            startActivity(view);
-            return;
-        } catch (ActivityNotFoundException e) {
+        Runnable fallback = () -> {
             if (inputAction.isEmpty()) {
                 Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
-                return;
+            } else {
+                open(new Intent(inputAction).setDataAndType(uri, "vnd.android.cursor.item/channel"));
             }
+        };
+        open(view, false, fallback);
+    }
+
+    private List<String> targetActivityPackages(Intent intent) {
+        Set<String> targets = new HashSet<>();
+        ComponentName component = intent.getComponent();
+        if (component != null) targets.add(component.getPackageName());
+        else if (intent.getPackage() != null) targets.add(intent.getPackage());
+        else {
+            for (ResolveInfo info : getPackageManager().queryIntentActivities(intent, 0)) {
+                if (info.activityInfo != null) targets.add(info.activityInfo.packageName);
+            }
+            ComponentName resolved = intent.resolveActivity(getPackageManager());
+            if (resolved != null) targets.add(resolved.getPackageName());
         }
-        open(new Intent(inputAction).setDataAndType(uri, "vnd.android.cursor.item/channel"));
+        List<String> result = new ArrayList<>(targets);
+        Collections.sort(result);
+        return result;
+    }
+
+    private List<String> targetServicePackages(Intent intent) {
+        Set<String> targets = new HashSet<>();
+        ComponentName component = intent.getComponent();
+        if (component != null) targets.add(component.getPackageName());
+        else if (intent.getPackage() != null) targets.add(intent.getPackage());
+        else for (ResolveInfo info : getPackageManager().queryIntentServices(intent, 0)) {
+            if (info.serviceInfo != null) targets.add(info.serviceInfo.packageName);
+        }
+        List<String> result = new ArrayList<>(targets);
+        Collections.sort(result);
+        return result;
+    }
+
+    private boolean targetQueryMayOmitProtectedApp(Intent intent) {
+        if (intent == null || intent.getComponent() != null || intent.getPackage() != null) return false;
+        return LauncherTargetAccess.mayHaveHiddenProtectedTargets(parentalSnapshot,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R, packageName -> {
+                    try {
+                        getPackageManager().getApplicationInfo(packageName, 0);
+                        return true;
+                    } catch (Exception notQueryableOrInstalled) {
+                        // Package visibility can hide package information while still allowing startActivity().
+                        return false;
+                    }
+                });
+    }
+
+    private void runAuthorizedTargets(List<String> packages, boolean targetsMayBeIncomplete, Runnable action) {
+        LauncherTargetAccess.run(parentalSnapshot, packages, targetsMayBeIncomplete,
+                AppAccessPolicy.Path.LAUNCHER_INTENT, action,
+                (packageName, onAuthenticated) -> {
+                    String prompt = packageName == null
+                            ? getString(R.string.parental_enter_pin_title)
+                            : getString(R.string.parental_unlock_app, applicationLabel(packageName));
+                    authenticatePin(prompt, onAuthenticated);
+                }, this::showParentalStateError);
+    }
+    private String applicationLabel(String packageName) {
+        try {
+            ApplicationInfo info = getPackageManager().getApplicationInfo(packageName, 0);
+            return String.valueOf(info.loadLabel(getPackageManager()));
+        } catch (Exception unavailable) {
+            return packageName;
+        }
+    }
+
+    private void startApplicationIntent(Intent intent, String label, boolean showError) {
+        if (intent == null) {
+            if (showError) Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(intent);
+            if (advancedEffects) overridePendingTransition(R.anim.app_open_enter, R.anim.app_open_exit);
+        } catch (Exception e) {
+            if (showError) Toast.makeText(this, getString(R.string.cant_open, label), Toast.LENGTH_SHORT).show();
+        }
     }
 
     /** Dropdown menu under the Inputs pill: HDMI ports (with connection state), AV and Live TV. */
@@ -1939,6 +2430,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         PopupWindow popup = glassPopup(panel, (int) (200 * density));
         addSettingsMenuRow(rows, popup, R.string.launcher_settings, () -> startActivityForResult(
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
+        addSettingsMenuRow(rows, popup, R.string.parental_control, this::showParentalControl);
         if (moduleCards) addSettingsMenuRow(rows, popup, R.string.module_cards, this::showModuleCards);
         if (dockRow) addSettingsMenuRow(rows, popup, R.string.dock_edit, this::startDockEdit);
         addSettingsMenuRow(rows, popup, R.string.reorder, this::toggleReorder);
