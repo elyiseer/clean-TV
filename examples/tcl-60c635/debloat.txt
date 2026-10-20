@@ -1,0 +1,75 @@
+# TCL 60C635 (reports as "Smart TV Pro", product G03_4K_GB, device BeyondTV4), Google TV 11 (SDK 30),
+# Realtek rtd288o, firmware V8-R51MT05-LF1V652 / AR11, security patch 2024-12-05, 2 GB RAM. Spain, Wi-Fi.
+# Same firmware as examples/tcl-43c645 and docs/devices/tcl-75c63b.md. See README.md in this folder.
+#
+# Tested 2026-10-20 on a real unit, batch by batch with a screenshot after each: Home, the Input key
+# (Quick panel), Live TV, HDMI and YouTube kept working, also after a cold reboot with batch 6 applied.
+# Remote: Netflix/YouTube/Prime buttons need the launcher's InputKeyService (app_keys 4062/4065/4099);
+# the TCL (4020) and gear (4077) buttons need HomeKeyService (settings_key_keycodes); see config.json
+# and build-and-install.sh.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/tcl-60c635/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/tcl-60c635/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.apps.tv.launcherx. HOME candidates before the handover: launcherx (2),
+# setupwraith RecoveryActivity (1), tv.settings FallbackHome (-1000). Saved Wi-Fi networks belonged to
+# android.uid.system / com.android.tv.settings, not setupwraith.
+# Live TV / HDMI: com.tcl.tv (TVActivity) + com.tcl.tvinput (tuner and passthrough input services).
+#
+# DO NOT DISABLE (load-bearing): com.tcl.tv, com.tcl.tvinput, com.tcl.settings, com.tcl.system.server,
+# com.tcl.providers.config, com.tcl.initsetup, com.tcl.factory.view, com.tcl.autopair,
+# com.tcl.tcl_bt_rcu_service, com.tcl.keyhelp, com.tcl.suspension (source/Quick panel),
+# com.tcl.inputmethod.international, com.google.android.inputmethod.latin, com.google.android.gms,
+# com.google.android.gsf, com.android.vending.
+# Kept by choice: Chromecast (mediashell), Miracast (com.tcl.miracast, com.tcl.magiconnectfree),
+# firmware updates (com.tcl.versionUpdateApp), com.tcl.gamebar (Steam Link), com.tcl.t_solo,
+# com.tcl.android.webview, com.google.android.apps.tv.dreamx (screensaver).
+
+# Batch 1 - telemetry and analytics
+com.tcl.bi                              # TCL BI analytics
+com.tcl.ttvs                            # TCL identifier/awareness services
+com.tcl.guard                           # TGuard: usage tracking, memory cleaner
+com.tcl.logkit                          # log collection, remote diagnosis
+com.google.android.feedback
+com.google.android.partnersetup
+
+# Batch 2 - TCL content, ads and promos
+com.tcl.partnercustomizer               # TCL rows on the Google TV home
+com.tcl.waterfall.overseas              # TCL content recommendations
+com.tcl.dashboard                       # TCL panel and promos
+com.tcl.messagebox                      # pushed messages
+com.tcl.overseasappshow                 # app promos on boot/network change
+com.tcl.tv.tclhome_passive              # pushes TCL content at boot
+com.tcl.esticker                        # retail demo stickers
+com.tcl.usercenter                      # TCL account
+com.tcl.channelplus                     # TCL Live: FAST IPTV channels with ads (its own TV input)
+
+# Batch 3 - background services not needed
+com.tcl.smartalexa                      # Alexa integration
+com.tcl.ocean.instructions              # on-screen manual
+com.tcl.hearaid
+com.tcl.useragreement
+com.google.android.apps.nbu.smartconnect.tv
+com.google.android.syncadapters.calendar
+com.google.android.onetimeinitializer
+com.google.android.marvin.talkback
+
+# Batch 4 - voice assistant (owner does not use it)
+com.google.android.katniss
+com.tcl.assistant
+com.tcl.micmanager
+com.google.android.tv.assistant         # assistant LED service
+
+# Batch 5 - preloaded apps not used
+tv.wuaki.apptv                          # Rakuten TV
+com.google.android.youtube.tvmusic
+com.google.android.play.games
+com.google.android.videos               # Google TV store
+com.tcl.gallery
+com.tcl.browser
+com.tcl.ui_mediaCenter                  # USB media player, re-enable for USB drives
+
+# Batch 6 - stock launcher handover (only once the new launcher is Home)
+com.google.android.tungsten.setupwraith
+com.google.android.apps.tv.launcherx

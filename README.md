@@ -212,6 +212,7 @@ BYINTEK, JMGO, Portronics, Stellamore, Wanbo and XGIMI projectors
 | TCL 55C815 (2020, Europe/Denmark, BeyondTV2, Realtek rtd285o) | Android TV 11 |
 | TCL 55Q10G Pro (China, tcl_mt5879_cn, MediaTek MT9952) | Android TV 11 |
 | TCL 55S470G (G10, G10_4K_US_NF, Realtek), US | Google TV 12 |
+| TCL 60C635 (Smart TV Pro, G03_4K_GB, Realtek rtd288o, V8-R51MT05-LF1V652), Spain | Google TV 11 |
 | TCL 65C725 (Smart TV Pro, BeyondTV4) | Android TV 11 |
 | TCL 65C735 (Smart TV Pro, G05, MediaTek), France | Google TV 11 |
 | TCL 85RM7L (G08, G08_4K_GB, MediaTek tcl9618) | Google TV 14 |
