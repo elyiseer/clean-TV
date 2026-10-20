@@ -58,4 +58,5 @@
     <string name="on">Wł.</string>
     <string name="off">Wył.</string>
     <string name="enable">Włącz</string>
+    <string name="last_tv_usage">Ostatnie użycie TV: %1$s</string>
 </resources>

@@ -58,4 +58,5 @@
     <string name="on">Açık</string>
     <string name="off">Kapalı</string>
     <string name="enable">Etkinleştir</string>
+    <string name="last_tv_usage">Son TV kullanımı: %1$s</string>
 </resources>

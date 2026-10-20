@@ -58,4 +58,5 @@
     <string name="card_state_new">新的</string>
     <string name="card_state_new_key">新金鑰</string>
     <string name="card_state_new_label">新名稱</string>
+    <string name="last_tv_usage">上次使用電視：%1$s</string>
 </resources>

@@ -64,6 +64,11 @@
     <!-- Show the Solar Hijri (Shamsi) date used in Iran and Afghanistan, e.g. "27 Mehr 1405", above the
          Gregorian date. -->
     <bool name="shamsi_date">false</bool>
+
+    <!-- Greeting intro: when the TV comes on and Home is in front, the greeting types itself out large in
+         the middle of the screen, stays a few seconds with the time the TV was last turned off under it,
+         then glides into its usual place. Any key moves it along. Skipped with reduced_motion. -->
+    <bool name="greeting_intro">false</bool>
     <!-- Optional VPN app the network pill opens (hold the pill for Wi-Fi settings), e.g. the package of the
          VPN you use. Empty: the pill opens Wi-Fi settings. The green VPN badge shows for any VPN either way;
          with an app set here, a red "VPN off" badge also shows while no VPN is up. -->

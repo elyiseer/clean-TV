@@ -35,4 +35,5 @@
     <string name="on">Ein</string>
     <string name="off">Aus</string>
     <string name="enable">Aktivieren</string>
+    <string name="last_tv_usage">Zuletzt genutzt: %1$s</string>
 </resources>

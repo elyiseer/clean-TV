@@ -46,4 +46,5 @@
     <string name="card_state_new">Novo</string>
     <string name="card_state_new_key">Nova chave</string>
     <string name="card_state_new_label">Novo nome</string>
+    <string name="last_tv_usage">Último uso da TV: %1$s</string>
 </resources>

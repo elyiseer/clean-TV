@@ -58,4 +58,5 @@
     <string name="on">Вкл.</string>
     <string name="off">Выкл.</string>
     <string name="enable">Включить</string>
+    <string name="last_tv_usage">Последнее использование: %1$s</string>
 </resources>

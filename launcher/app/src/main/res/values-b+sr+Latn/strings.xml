@@ -39,4 +39,5 @@
     <string name="on">Uklj.</string>
     <string name="off">Isklj.</string>
     <string name="enable">Uključi</string>
+    <string name="last_tv_usage">Poslednje korišćenje TV-a: %1$s</string>
 </resources>
