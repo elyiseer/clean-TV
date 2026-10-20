@@ -58,4 +58,12 @@
     <string name="on">Wł.</string>
     <string name="off">Wył.</string>
     <string name="enable">Włącz</string>
+    <string name="net_menu_wifi_settings">Ustawienia Wi-Fi</string>
+    <string name="net_menu_address">Adres IP</string>
+    <string name="net_menu_offline">Brak połączenia</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Port debugowania bezprzewodowego</string>
+    <string name="net_menu_checking">Sprawdzanie…</string>
+    <string name="net_menu_not_found">Nie znaleziono</string>
+    <string name="net_menu_off">Wyłączone</string>
 </resources>

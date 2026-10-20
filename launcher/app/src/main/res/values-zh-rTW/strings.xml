@@ -58,4 +58,12 @@
     <string name="card_state_new">新的</string>
     <string name="card_state_new_key">新金鑰</string>
     <string name="card_state_new_label">新名稱</string>
+    <string name="net_menu_wifi_settings">Wi-Fi 設定</string>
+    <string name="net_menu_address">IP 位址</string>
+    <string name="net_menu_offline">未連線</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">無線偵錯連接埠</string>
+    <string name="net_menu_checking">正在檢查…</string>
+    <string name="net_menu_not_found">找不到</string>
+    <string name="net_menu_off">關閉</string>
 </resources>

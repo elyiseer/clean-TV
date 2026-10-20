@@ -39,4 +39,12 @@
     <string name="on">Uklj.</string>
     <string name="off">Isklj.</string>
     <string name="enable">Uključi</string>
+    <string name="net_menu_wifi_settings">Wi-Fi podešavanja</string>
+    <string name="net_menu_address">IP adresa</string>
+    <string name="net_menu_offline">Nije povezano</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Port za bežično otklanjanje grešaka</string>
+    <string name="net_menu_checking">Proverava se…</string>
+    <string name="net_menu_not_found">Nije pronađeno</string>
+    <string name="net_menu_off">Isključeno</string>
 </resources>

@@ -58,4 +58,12 @@
     <string name="on">Вкл.</string>
     <string name="off">Выкл.</string>
     <string name="enable">Включить</string>
+    <string name="net_menu_wifi_settings">Настройки Wi-Fi</string>
+    <string name="net_menu_address">IP-адрес</string>
+    <string name="net_menu_offline">Нет подключения</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Порт отладки по Wi-Fi</string>
+    <string name="net_menu_checking">Проверка…</string>
+    <string name="net_menu_not_found">Не найдено</string>
+    <string name="net_menu_off">Выкл.</string>
 </resources>

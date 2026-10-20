@@ -58,4 +58,12 @@
     <string name="on">Açık</string>
     <string name="off">Kapalı</string>
     <string name="enable">Etkinleştir</string>
+    <string name="net_menu_wifi_settings">Wi-Fi ayarları</string>
+    <string name="net_menu_address">IP adresi</string>
+    <string name="net_menu_offline">Bağlı değil</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Kablosuz hata ayıklama bağlantı noktası</string>
+    <string name="net_menu_checking">Kontrol ediliyor…</string>
+    <string name="net_menu_not_found">Bulunamadı</string>
+    <string name="net_menu_off">Kapalı</string>
 </resources>

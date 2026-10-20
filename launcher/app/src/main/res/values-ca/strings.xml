@@ -31,4 +31,12 @@
     <string name="on">Activat</string>
     <string name="off">Desactivat</string>
     <string name="enable">Activa</string>
+    <string name="net_menu_wifi_settings">Configuració de la Wi-Fi</string>
+    <string name="net_menu_address">Adreça IP</string>
+    <string name="net_menu_offline">No connectat</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Port de depuració sense fil</string>
+    <string name="net_menu_checking">S\'està comprovant…</string>
+    <string name="net_menu_not_found">No s\'ha trobat</string>
+    <string name="net_menu_off">Desactivat</string>
 </resources>

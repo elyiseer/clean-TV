@@ -26,6 +26,7 @@ import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.net.nsd.NsdManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
@@ -356,7 +357,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnInputs.setOnClickListener(v -> showInputs());
         btnWifi.setOnClickListener(v -> openNetworkPill());
         btnWifi.setOnLongClickListener(v -> {
-            open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
+            showNetworkMenu();
             return true;
         });
         btnSettings.setOnClickListener(v -> open(systemIntent(Settings.ACTION_SETTINGS)));
@@ -1264,6 +1265,68 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             action.run();
         });
         rows.addView(row);
+    }
+
+    // ---- network menu (hold OK on the network pill) -------------------------------------------------
+
+    /**
+     * Wi-Fi settings first, as hold OK did before, then read-only rows: the TV's address, classic ADB
+     * on 5555 when it answers, and the Wireless debugging port, so a computer can connect without
+     * digging through Developer options. Nothing here changes a setting (NetworkMenu).
+     */
+    private void showNetworkMenu() {
+        View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
+        LinearLayout rows = panel.findViewById(R.id.rows);
+        final PopupWindow popup = glassPopup(panel, (int) (320 * density));
+        final String ip = NetworkMenu.ipv4Address(this);
+
+        addNetworkRow(rows, getString(R.string.net_menu_wifi_settings), "").setOnClickListener(v -> {
+            popup.dismiss();
+            open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
+        });
+        addNetworkRow(rows, getString(R.string.net_menu_address), ip != null ? ip : getString(R.string.net_menu_offline));
+        final TextView adb = addNetworkRow(rows, getString(R.string.net_menu_adb), getString(R.string.net_menu_checking))
+                .findViewById(R.id.status);
+        final TextView wireless = addNetworkRow(rows, getString(R.string.net_menu_wireless_port), "")
+                .findViewById(R.id.status);
+
+        NetworkMenu.probeAdb(handler, open -> {
+            if (popup.isShowing()) adb.setText(open && ip != null ? ip + ":" + NetworkMenu.ADB_PORT : getString(R.string.net_menu_off));
+        });
+        final NsdManager nsd = getSystemService(NsdManager.class);
+        final NsdManager.DiscoveryListener search;
+        if (ip == null || !NetworkMenu.wirelessDebuggingOn(this)) {
+            wireless.setText(R.string.net_menu_off);
+            search = null;
+        } else {
+            wireless.setText(R.string.net_menu_checking);
+            search = NetworkMenu.findWirelessPort(nsd, ip, handler, port -> {
+                if (popup.isShowing()) wireless.setText(ip + ":" + port);
+            });
+            // Nothing found within a few seconds: say so instead of "Checking…" forever.
+            handler.postDelayed(() -> {
+                if (popup.isShowing() && getString(R.string.net_menu_checking).contentEquals(wireless.getText())) {
+                    wireless.setText(R.string.net_menu_not_found);
+                }
+            }, NetworkMenu.SEARCH_MS);
+        }
+        popup.setOnDismissListener(() -> {
+            if (openPopup == popup) openPopup = null;
+            NetworkMenu.stop(nsd, search);
+        });
+
+        dropIn(popup, panel, btnWifi, getResources().getBoolean(R.bool.rtl_menu_bar) ? Gravity.START : Gravity.END);
+        rows.getChildAt(0).requestFocus();
+    }
+
+    private View addNetworkRow(LinearLayout rows, String title, String status) {
+        View row = getLayoutInflater().inflate(R.layout.item_menu_row, rows, false);
+        ((TextView) row.findViewById(R.id.title)).setText(title);
+        TextView s = row.findViewById(R.id.status);
+        s.setText(status);
+        s.setVisibility(status.isEmpty() && rows.getChildCount() == 0 ? View.GONE : View.VISIBLE);
+        rows.addView(row);
+        return row;
     }
 
     // ---- launcher settings and module cards -------------------------------------------------------

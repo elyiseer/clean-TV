@@ -58,4 +58,12 @@
     <string name="on">Activé</string>
     <string name="off">Désactivé</string>
     <string name="enable">Activer</string>
+    <string name="net_menu_wifi_settings">Paramètres Wi-Fi</string>
+    <string name="net_menu_address">Adresse IP</string>
+    <string name="net_menu_offline">Non connecté</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Port du débogage sans fil</string>
+    <string name="net_menu_checking">Vérification…</string>
+    <string name="net_menu_not_found">Introuvable</string>
+    <string name="net_menu_off">Désactivé</string>
 </resources>

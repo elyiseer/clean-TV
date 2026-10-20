@@ -64,4 +64,12 @@
     <string name="card_state_new">New</string>
     <string name="card_state_new_key">New key</string>
     <string name="card_state_new_label">New name</string>
+    <string name="net_menu_wifi_settings">Wi-Fi settings</string>
+    <string name="net_menu_address">IP address</string>
+    <string name="net_menu_offline">Not connected</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Wireless debugging port</string>
+    <string name="net_menu_checking">Checking…</string>
+    <string name="net_menu_not_found">Not found</string>
+    <string name="net_menu_off">Off</string>
 </resources>

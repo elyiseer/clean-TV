@@ -32,4 +32,12 @@
     <string name="on">Sí</string>
     <string name="off">No</string>
     <string name="enable">Activar</string>
+    <string name="net_menu_wifi_settings">Ajustes de Wi-Fi</string>
+    <string name="net_menu_address">Dirección IP</string>
+    <string name="net_menu_offline">Sin conexión</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Puerto de depuración inalámbrica</string>
+    <string name="net_menu_checking">Comprobando…</string>
+    <string name="net_menu_not_found">No encontrado</string>
+    <string name="net_menu_off">Desactivado</string>
 </resources>

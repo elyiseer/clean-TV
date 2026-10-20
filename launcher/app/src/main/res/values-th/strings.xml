@@ -33,4 +33,12 @@
     <string name="on">เปิด</string>
     <string name="off">ปิด</string>
     <string name="enable">เปิดใช้งาน</string>
+    <string name="net_menu_wifi_settings">การตั้งค่า Wi-Fi</string>
+    <string name="net_menu_address">ที่อยู่ IP</string>
+    <string name="net_menu_offline">ไม่ได้เชื่อมต่อ</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">พอร์ตการแก้ไขข้อบกพร่องแบบไร้สาย</string>
+    <string name="net_menu_checking">กำลังตรวจสอบ…</string>
+    <string name="net_menu_not_found">ไม่พบ</string>
+    <string name="net_menu_off">ปิด</string>
 </resources>

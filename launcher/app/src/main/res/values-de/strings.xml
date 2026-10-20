@@ -35,4 +35,12 @@
     <string name="on">Ein</string>
     <string name="off">Aus</string>
     <string name="enable">Aktivieren</string>
+    <string name="net_menu_wifi_settings">WLAN-Einstellungen</string>
+    <string name="net_menu_address">IP-Adresse</string>
+    <string name="net_menu_offline">Nicht verbunden</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Port für kabelloses Debugging</string>
+    <string name="net_menu_checking">Wird geprüft…</string>
+    <string name="net_menu_not_found">Nicht gefunden</string>
+    <string name="net_menu_off">Aus</string>
 </resources>

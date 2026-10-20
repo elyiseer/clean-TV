@@ -46,4 +46,12 @@
     <string name="card_state_new">Novo</string>
     <string name="card_state_new_key">Nova chave</string>
     <string name="card_state_new_label">Novo nome</string>
+    <string name="net_menu_wifi_settings">Configurações de Wi-Fi</string>
+    <string name="net_menu_address">Endereço IP</string>
+    <string name="net_menu_offline">Sem conexão</string>
+    <string name="net_menu_adb">ADB</string>
+    <string name="net_menu_wireless_port">Porta de depuração por Wi-Fi</string>
+    <string name="net_menu_checking">Verificando…</string>
+    <string name="net_menu_not_found">Não encontrado</string>
+    <string name="net_menu_off">Desativado</string>
 </resources>
