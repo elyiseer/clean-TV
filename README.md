@@ -84,7 +84,7 @@ install any launcher at all; their lists say so in the header.
 
 Tested lists from contributors, one folder per model in [`examples/`](examples/):
 
-**TCL** 26 · **Sony** 18 · **Xiaomi** 16 · **Philips** 8 · **Hisense** 6 · **Amazon Fire TV** 3 ·
+**TCL** 26 · **Sony** 18 · **Xiaomi** 16 · **Philips** 8 · **Hisense** 6 · **Amazon Fire TV** 4 ·
 **Panasonic** 3 · **BenQ** 2 · **CHiQ** 2 · **Haier** 2 · **Hitachi** 2 · **NVIDIA Shield** 2 · **Skyworth** 2 ·
 **Vu** 2 · AiPro2K · AIWA · Cecotec · Chromecast with Google TV · Compac · EKO · FFalcon · Freebox ·
 Insignia Fire TV · Kalley · MTC · OnePlus · onn · Polytron · PRISM+ · RCA · Redmi · SANYO · Tele System ·
@@ -100,6 +100,7 @@ BYINTEK, JMGO, Portronics, Stellamore, Wanbo and XGIMI projectors
 | AIWA AI PONT SA (Changhong, osaka, ISDB86AW) | Google TV 14 |
 | Amazon Fire TV 50" 4K smart TV (AFTTIFF43, brandenburg) | Fire OS 7.7.1.7 / Android 9 |
 | Amazon Fire TV Stick 4K, 1st gen 2018 (AFTMM, mantis) | Fire OS 6.7.1.1 / Android 7.1 |
+| Amazon Fire TV Stick 4K Max, 1st gen 2021 (AFTKA, kara) | Fire OS 7.7.1.3 / Android 9 |
 | Amazon Fire TV Stick Lite, 1st gen 2020 (AFTSS, sheldon) | Fire OS 7.7.1.7 / Android 9 |
 | BenQ E55-735 (Changhong AI PONT, DVB96BQ) | Google TV 14 |
 | BenQ E55-750 (Changhong AI PONT, DVB96BQ) | Google TV (Android 11) |
