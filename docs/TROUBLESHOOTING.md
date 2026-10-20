@@ -116,6 +116,21 @@ Things that bit us or contributors, so they don't bite you. Commands use `tools/
   the credentials in memory, so casting survives until the next reboot. Reported on Google's own
   Chromecast hardware so far; the Xiaomi Mi Box S 2nd gen list says casting from a Pixel still works
   there with setupwraith off.
+- **Casting disappears although the Cast receiver is still running**, seen on a TCL 75QM751G (QM7,
+  Google TV 14) after its list, and the same "alive is not discoverable" conclusion on a TCL
+  BeyondTV2 (Android TV 9, R851T02 V660) in the same thread. Phones and a PC stop seeing the TV,
+  `com.google.android.apps.mediashell` is up and listening on 8008/8009, and there is no
+  `No private key` or `CastInfoProvider` line — so this is not the setupwraith case above, and
+  re-enabling setupwraith does not help. Check discovery instead of the process:
+  `tools/tv.py "logcat -d -s cast_shell | grep -E 'Done announcing|responses sent'"` and
+  `tools/tv.py "dumpsys activity service com.google.android.apps.mediashell | grep WargService"`.
+  A receiver that is advertising logs `MdnsAppFilter: Done announcing.`,
+  `responses sent in 60 seconds: N` and `Gcm.Register.Success=2`, with `WargService` up. If those are
+  missing while the process lives, the receiver is hung: the QM7 report saw its connections sitting
+  in `CLOSE_WAIT` on 8009 with unread data. `tools/tv.py "am force-stop
+  com.google.android.apps.mediashell"` restarts it (the TV starts it again on demand), and
+  advertising returned within seconds, without a reboot. Device notes:
+  [TCL 75QM751G](devices/tcl-75qm751g-qm7.md).
 - **The TV drops off Wi-Fi every minute right after the install**, seen on Google TV 14 (Xiaomi
   MiTV-MZTU0): the same setupwraith `.RecoveryActivity` took Home and system_server crash-looped
   on it. The install script now starts the new launcher before disabling the stock one, sets the
