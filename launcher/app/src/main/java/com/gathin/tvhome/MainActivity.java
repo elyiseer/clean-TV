@@ -72,9 +72,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -1795,6 +1797,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 if (tim.getInputState(info.getId()) == TvInputManager.INPUT_STATE_CONNECTED) hdmiConnected++;
             }
             boolean hdmiStateBogus = hdmiPorts > 1 && hdmiConnected == hdmiPorts;
+            // A device found over HDMI-CEC (a console, a soundbar) is a second input whose parent is its port,
+            // so the port would be listed twice. Keep the port's row, named after the device like the TV's own
+            // Settings does ("PlayStation 5 · HDMI 2"), and drop the device's.
+            Set<String> ids = new HashSet<>();
+            for (TvInputInfo info : inputs) ids.add(info.getId());
+            Map<String, TvInputInfo> cecChild = new HashMap<>();
+            for (TvInputInfo info : inputs) {
+                String parent = info.getParentId();
+                if (parent != null && ids.contains(parent) && info.isPassthroughInput() && !info.isHidden(this)
+                        && !cecChild.containsKey(parent)) {
+                    cecChild.put(parent, info);
+                }
+            }
             for (TvInputInfo info : inputs) {
                 if (info.getType() == TvInputInfo.TYPE_TUNER
                         && (info.getServiceInfo().applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
@@ -1818,17 +1833,26 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 }
                 // Inputs hidden in the TV's Settings > Inputs stay out of the menu too.
                 if (!info.isPassthroughInput() || info.isHidden(this)) continue;
+                if (info.getParentId() != null && ids.contains(info.getParentId())) continue;
                 CharSequence l = info.loadLabel(this);
                 String label = l == null ? info.getId() : l.toString();
                 boolean hdmi = info.getType() == TvInputInfo.TYPE_HDMI;
                 if (hdmi && !label.toUpperCase(Locale.ROOT).contains("HDMI")) label = "HDMI " + label;
-                // The name given in Settings > Inputs (e.g. "MacBook Pro") goes first, the port after it.
+                // The name given in Settings > Inputs (e.g. "MacBook Pro") goes first, the port after it;
+                // without one, the name of a CEC device on the port.
+                TvInputInfo child = cecChild.get(info.getId());
                 CharSequence custom = info.loadCustomLabel(this);
+                if ((custom == null || custom.length() == 0) && child != null) custom = child.loadLabel(this);
                 if (custom != null && custom.length() > 0 && !custom.toString().equals(label)) {
                     label = custom + " \u00B7 " + label;
                 }
                 final String id = info.getId();
-                int state = hdmi && hdmiStateBogus ? -1 : tim.getInputState(id);
+                // Analog AV jacks have no hotplug detection, and some TVs report them as always connected
+                // (TCL Smart TV Pro G03 says "Connected" with nothing plugged in), so AV rows show no state.
+                int state = !hdmi || hdmiStateBogus ? -1 : tim.getInputState(id);
+                if (child != null && state != -1 && tim.getInputState(child.getId()) == TvInputManager.INPUT_STATE_CONNECTED) {
+                    state = TvInputManager.INPUT_STATE_CONNECTED;
+                }
                 if (!hdmi && rows.getChildCount() > 0 && !sawNonHdmi) addSeparator(rows);
                 if (!hdmi) sawNonHdmi = true;
                 addInputRow(rows, popup, hdmi ? R.drawable.ic_input : R.drawable.ic_av, label, state,
