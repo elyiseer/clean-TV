@@ -1,28 +1,34 @@
 package com.gathin.tvhome;
 
 import android.accessibilityservice.AccessibilityService;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
- * Maps the remote's Input button to the system input switcher, from any app. Remotes such as the Chromecast voice
- * remote send KEYCODE_TV for it; on Google TV the stock launcher handles that key, so with the stock launcher
- * disabled the button does nothing. Only KEYCODE_TV is consumed; every other key passes through untouched.
+ * Maps the remote's Input button to the launcher's own Inputs menu, from any app. Different remotes send
+ * different key codes for that button: KEYCODE_TV (Chromecast voice remote), KEYCODE_TV_INPUT, or
+ * KEYCODE_MEDIA_RECORD (the Xiaomi Mi TV croods remote's "Input/Source" button, which the kernel reports as
+ * KEY_RECORD). The stock launcher used to handle these; with it disabled the button does nothing, so this
+ * service catches them and opens MainActivity's Inputs dropdown. Every other key passes through untouched.
  * Opt-in: INPUT_KEY_SERVICE=1 build-and-install.sh (or -InputKeyService on Windows) enables it.
  */
 public class InputKeyService extends AccessibilityService {
 
-    private static final String ACTION_VIEW_INPUTS = "com.android.tv.action.VIEW_INPUTS";
-
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
-        if (event.getKeyCode() != KeyEvent.KEYCODE_TV) return false;
+        int kc = event.getKeyCode();
+        if (kc != KeyEvent.KEYCODE_TV
+                && kc != KeyEvent.KEYCODE_TV_INPUT
+                && kc != KeyEvent.KEYCODE_MEDIA_RECORD) {
+            return false;
+        }
         if (event.getAction() == KeyEvent.ACTION_UP) {
             try {
-                startActivity(new Intent(ACTION_VIEW_INPUTS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            } catch (ActivityNotFoundException ignored) {
+                startActivity(new Intent(this, MainActivity.class)
+                        .setAction(MainActivity.ACTION_OPEN_INPUTS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } catch (Exception ignored) {
             }
         }
         return true;

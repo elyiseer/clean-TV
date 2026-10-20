@@ -91,6 +91,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private int ambientColor = -1;
     private boolean heroShown;
     private TextView greeting;
+    /** Intent action: open the Inputs dropdown (sent by InputKeyService when the remote's Input key is pressed). */
+    public static final String ACTION_OPEN_INPUTS = "com.gathin.tvhome.action.OPEN_INPUTS";
+
     private View btnInputs;
     private TextView btnWifi;
     private TextView shamsiDate;
@@ -370,6 +373,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (intent != null && ACTION_OPEN_INPUTS.equals(intent.getAction())) {
+            // The remote's Input button (via InputKeyService) toggles the Inputs dropdown from any app.
+            handler.post(() -> {
+                if (openPopup != null) {
+                    openPopup.dismiss();
+                } else if (btnInputs != null && btnInputs.getVisibility() == View.VISIBLE) {
+                    showInputs();
+                }
+            });
+            return;
+        }
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
         grid.scrollToPosition(0);
         lastFocused = 0;
