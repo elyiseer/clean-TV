@@ -139,6 +139,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean reducedMotion;
     /** config.xml dock_row: the first row is a separate dock (band, parked low, top shelf) rather than plain grid. */
     private boolean dockRow;
+    /** The highlight springs past its target (config.xml, focus_overshoot); false goes straight there. */
+    private boolean focusOvershoot;
     /** Festive skin from the theme (see Festival); applied while it is active today. */
     private Festival festival = Festival.NONE;
     private boolean festive;
@@ -247,6 +249,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         advancedEffects = cfg.animations && cfg.advancedEffects;
         reducedMotion = cfg.reducedMotion;
         dockRow = cfg.dockRow;
+        focusOvershoot = cfg.focusOvershoot;
         festival = cfg.festival;
         festive = festival.active(LocalDate.now());
         liveTvPkg = cfg.liveTvPackage;
@@ -283,6 +286,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             date.setPadding(0, (int) (4 * density), 0, 0);
         }
         vpnApp = cfg.vpnApp;
+        if (!cfg.showNetworkPill) btnWifi.setVisibility(View.GONE);
         moduleCards = cfg.moduleCards;
         hiddenApps = new HashSet<>(cfg.hiddenApps);
 
@@ -413,6 +417,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 // and stops once the highlight is within 1.5 px of its tile.
                 s.setSpring(new SpringForce().setStiffness(1400f).setDampingRatio(0.95f));
                 s.setMinimumVisibleChange(1.5f);
+            } else if (!focusOvershoot) {
+                // Critically damped: glides straight onto the tile without swinging past it.
+                s.setSpring(new SpringForce().setStiffness(advancedEffects ? 520f : 440f).setDampingRatio(1f));
             } else {
                 s.setSpring(new SpringForce().setStiffness(advancedEffects ? 320f : 260f)
                         .setDampingRatio(advancedEffects ? 0.76f : 0.58f));
@@ -447,7 +454,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 focusTile(lastFocused % COLUMNS);
                 return true;
             }
-            int firstButton = btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs : R.id.btnWifi;
+            int firstButton = btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs : firstTopButton().getId();
             int leftButton = rtlMenuBar ? R.id.btnSettings : firstButton;
             int rightButton = rtlMenuBar ? firstButton : R.id.btnSettings;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return v.getId() == leftButton;
@@ -1375,7 +1382,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     @Override public void onLibraryUp() {
-        if (adapter.appCount() == 0) { btnWifi.requestFocus(); return; }
+        if (adapter.appCount() == 0) { firstTopButton().requestFocus(); return; }
         int lastRow = ((adapter.appCount() - 1) / COLUMNS) * COLUMNS;
         focusTile(Math.min(lastRow + lastFocused % COLUMNS, adapter.appCount() - 1));
     }
@@ -1426,12 +1433,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    /** The first top-bar button after Inputs that is shown: Wi-Fi, Reorder, then Settings (always there). */
+    private View firstTopButton() {
+        if (btnWifi.getVisibility() == View.VISIBLE) return btnWifi;
+        if (btnReorder.getVisibility() == View.VISIBLE) return btnReorder;
+        return findViewById(R.id.btnSettings);
+    }
+
     private void focusTile(int position) {
         libraryFocusPending = false;
         cancelPendingFocusScroll();
         if (adapter.appCount() == 0) {
             if (adapter.isLibraryAt(0)) focusLibrary();
-            else btnWifi.requestFocus();
+            else firstTopButton().requestFocus();
             return;
         }
         final int pos = adapter.focusablePosition(Math.max(0, Math.min(position, adapter.appCount() - 1)));

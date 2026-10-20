@@ -85,4 +85,5 @@
         <item quantity="two">שתי אפליקציות</item>
         <item quantity="other">%1$d אפליקציות</item>
     </plurals>
+    <string name="overshoot_state">קפיציות: %1$s</string>
 </resources>

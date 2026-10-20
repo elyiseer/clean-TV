@@ -57,4 +57,5 @@
         <item quantity="one">%1$d App</item>
         <item quantity="other">%1$d Apps</item>
     </plurals>
+    <string name="overshoot_state">Nachfedern: %1$s</string>
 </resources>

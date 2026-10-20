@@ -55,8 +55,12 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `accent_color` | `#RRGGBB` | Colour of the focus glow while the festive skin is on; diya gold if not set |
 | `settings_key_keycodes` | list of keycodes | Remote buttons that open Settings, for `HomeKeyService` (TCL Google TV gear: `[83]`) |
 | `settings_key_panel` | bool | Those buttons open a small quick settings panel (TV settings, Display, Network, Apps, Launcher settings) instead of the TV's Settings |
+| `home_redirect_package` | string | Stock launcher that firmware will not let you disable or uninstall (Nokia Streaming Box 8000: `com.google.android.tvlauncher`); with `HomeKeyService` on, the Home button opens this launcher and it steps in front of that one whenever it comes up |
+| `show_network_pill` | bool | Show the Wi-Fi/Ethernet pill in the top bar (true by default) |
+| `focus_overshoot` | bool | The glass highlight and the focused tile spring past their target before settling (true by default); false goes straight there and keeps smooth scrolling. Also in Launcher settings on the TV ("Bounce") |
 
 ## Wallpapers
+
 
 `wallpaper.jpg` is drawn full screen behind the launcher, centre-cropped. Keep it dark, 1920×1080 and
 under about 300 KB: the text, the hero name and the dock band are designed for black, and a 1 GB TV

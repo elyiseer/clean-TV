@@ -61,6 +61,23 @@
          Both keys can also be set from a theme's config.json ("settings_key_keycodes": [83]). -->
     <bool name="settings_key_panel">false</bool>
 
+    <!-- Firmware that refuses both disabling and uninstalling (for user 0) its stock launcher,
+         and gives it a higher HOME priority than any sideloaded app (Nokia Streaming Box 8000), keeps
+         Home no matter what. Name that launcher here and HomeKeyService (HOME_KEY_SERVICE=1) sends the
+         Home button to this launcher and steps in front of the stock one whenever it comes up. Empty
+         leaves Home alone. Can also be set with "home_redirect_package" in a theme's config.json. -->
+    <string name="home_redirect_package" translatable="false"></string>
+
+    <!-- The Wi-Fi/Ethernet pill in the top bar. false hides it (on Android 14 with Location off it can
+         only say "Wi-Fi", not the network name). Can also be set with "show_network_pill" in a theme. -->
+    <bool name="show_network_pill">true</bool>
+
+    <!-- The glass highlight springs past the tile it moves to and the focused tile zooms past its size
+         before settling. false: both go straight there, with no bounce, while scrolling stays smooth
+         (reduced_motion also removes the overshoot, but scrolls in one jump). Also on the TV in Launcher
+         settings, and "focus_overshoot" in a theme's config.json. -->
+    <bool name="focus_overshoot">true</bool>
+
     <!-- Show the Solar Hijri (Shamsi) date used in Iran and Afghanistan, e.g. "27 Mehr 1405", above the
          Gregorian date. -->
     <bool name="shamsi_date">false</bool>

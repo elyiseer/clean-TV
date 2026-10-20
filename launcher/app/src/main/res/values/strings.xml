@@ -86,4 +86,5 @@
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
     </plurals>
+    <string name="overshoot_state">Bounce: %1$s</string>
 </resources>

@@ -60,6 +60,11 @@
             android:textSize="14sp" />
 
         <TextView
+            android:id="@+id/overshootChoice"
+            style="@style/SettingsRow"
+            android:layout_marginTop="18dp" />
+
+        <TextView
             android:id="@+id/followThemeChoice"
             style="@style/SettingsRow"
             android:layout_marginTop="18dp"
