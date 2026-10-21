@@ -139,8 +139,9 @@
     <bool name="module_cards">true</bool>
 
     <!-- Reduced motion: for TVs whose GPU cannot keep up (MediaTek MT5895 on Android 10 is the known case).
-         true keeps the GPU drawing path but calms the movement: a stiff highlight spring with no bounce,
-         tiles that zoom without overshoot, shorter fades and no tile entrance when Home comes back. Set it
+         true keeps the GPU drawing path but calms the movement and draws far fewer frames: the highlight
+         slides with no bounce and settles within 5 frames, every animation lasts 90 ms or less, names, top
+         shelf, glow and highlight appear instead of fading, and there is no tile entrance. Set it
          here or with "reduced_motion": true in a theme's config.json; false keeps the normal motion. -->
     <bool name="reduced_motion">false</bool>
 

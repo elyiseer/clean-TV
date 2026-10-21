@@ -44,7 +44,7 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `shamsi_date` | bool | Show the Solar Hijri date above the Gregorian one |
 | `greeting_name` | string | A name after the greeting, e.g. `"Mr. Trịnh"` for GOOD MORNING, MR. TRỊNH; empty for the greeting alone |
 | `module_cards` | bool | Look for module cards and ask about them (`true`); `false` turns the feature off |
-| `reduced_motion` | bool | Calmer motion for weak GPUs: stiff highlight spring, no tile overshoot, short fades, no entrance replay |
+| `reduced_motion` | bool | Calmer motion for weak GPUs: highlight settles in 5 frames, animations 90 ms or less, no fades, no tile entrance |
 | `vpn_app` | string | App the network pill opens when a VPN is configured; also shows a red "VPN off" badge while no VPN is up |
 | `animations` | bool | Basic focus, glass, title and tile entrance motion; true by default |
 | `advanced_effects` | bool | Optional lifted tile, icon zoom, smooth ambient colour and app opening effects; false by default |
@@ -98,9 +98,10 @@ default, press Follow theme, or push a theme again.
 
 ## Reduced motion
 
-`"reduced_motion": true` keeps the look but calms the movement: the highlight spring is stiff instead
-of bouncing, tiles zoom without overshoot, fades are shorter, and Home does not replay the tile
-entrance when you come back to it. Use it on TVs whose GPU cannot keep up; a MediaTek MT5895 on
+`"reduced_motion": true` keeps the look but calms the movement and draws far fewer frames: the
+highlight slides without bouncing and settles within 5 frames, every animation (tile zoom, dropdowns,
+the app library) lasts 90 ms or less, names, the top shelf, the glow and the highlight appear instead of
+fading, and there is no tile entrance. Use it on TVs whose GPU cannot keep up; a MediaTek MT5895 on
 Android 10 is the known case. The default, `false`, keeps the normal motion.
 
 ```json
