@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="stats_label">Statistik sistem</string>
+    <string name="stats_state">Statistik sistem: %1$s</string>
+</resources>
