@@ -159,4 +159,16 @@
          dots, the focus glow takes the app's colour and the dock band turns translucent. false keeps the plain
          shelf. Can also be set with "cinematic_home": true in a theme's config.json. -->
     <bool name="cinematic_home">false</bool>
+
+    <!-- The top-bar pills: both (icon and label, the default), icon (a round icon-only button, like the reorder
+         button; the label is still read out by TalkBack) or text (the label alone). The _width keys cap the
+         label's width in dp, and a longer label ends in an ellipsis; 0 keeps the layout's own limit (the network
+         name stops at about 110dp, Inputs and Settings are not capped). Up to 600. All six can also be set in a
+         theme's config.json, e.g. "settings_button": "icon", "wifi_button_width": 200. -->
+    <string name="inputs_button" translatable="false">both</string>
+    <integer name="inputs_button_width">0</integer>
+    <string name="wifi_button" translatable="false">both</string>
+    <integer name="wifi_button_width">0</integer>
+    <string name="settings_button" translatable="false">both</string>
+    <integer name="settings_button_width">0</integer>
 </resources>

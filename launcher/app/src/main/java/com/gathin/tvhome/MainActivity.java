@@ -131,6 +131,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView greeting;
     private View btnInputs;
     private TextView btnWifi;
+    /** config.xml wifi_button: whether the network pill shows its icon, its label or both. */
+    private TopButtonStyle wifiStyle;
     private TextView shamsiDate;
     private TextView stats;
     private List<RaceWeekend.Race> raceCalendar;
@@ -472,6 +474,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         btnInputs = findViewById(R.id.btnInputs);
         View btnSettings = findViewById(R.id.btnSettings);
+        wifiStyle = cfg.wifiButton;
+        cfg.inputsButton.apply((TextView) btnInputs, density);
+        wifiStyle.apply(btnWifi, density);
+        cfg.settingsButton.apply((TextView) btnSettings, density);
         btnInputs.setOnClickListener(v -> showInputs());
         btnWifi.setOnClickListener(v -> openNetworkPill());
         btnWifi.setOnLongClickListener(v -> {
@@ -515,7 +521,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         .setDuration(160).start());
             }
         }
-        if (festive) applyFestiveSkin((TextView) btnInputs, (TextView) btnSettings);
+        if (festive) applyFestiveSkin((TextView) btnInputs, (TextView) btnSettings, cfg);
 
         // Hide the glass when focus leaves the tiles.
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> {
@@ -1880,7 +1886,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         // With a VPN app configured, a VPN that is down matters too: show a red "VPN off" capsule then.
         boolean vpnDown = !vpn && online && !vpnApp.isEmpty();
-        if (vpn || vpnDown) {
+        if (!wifiStyle.showsText()) {
+            // Icon only (wifi_button "icon"): the name and VPN state are still read out.
+            String badge = vpn || vpnDown ? " " + getString(vpn ? R.string.vpn : R.string.vpn_off) : "";
+            btnWifi.setContentDescription(text + badge);
+        } else if (vpn || vpnDown) {
             // Network name, then the green lock-and-VPN (or red "VPN off") capsule drawn in place of the word.
             String badge = getString(vpn ? R.string.vpn : R.string.vpn_off);
             VpnBadge span = new VpnBadge(vpn ? getDrawable(R.drawable.ic_lock) : null, density);
@@ -1905,7 +1915,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (online && flame == 0) flame = 3;   // online some other way (cellular, USB tethering)
             diya.setSteady(steady);
             diya.setFlame(flame);
-        } else {
+        } else if (wifiStyle.showsIcon()) {
             btnWifi.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, 0, 0, 0);
         }
     }
@@ -1916,16 +1926,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * Swaps the pill icons for the festival's: a bell for Inputs that swings when focused, a diya for the
      * network whose flame follows the connection, and a marigold for Settings that turns when focused.
      */
-    private void applyFestiveSkin(TextView inputs, TextView settings) {
+    private void applyFestiveSkin(TextView inputs, TextView settings, Config cfg) {
         bell = new BellDrawable(density);
         marigold = new MarigoldDrawable(density);
         diya = new DiyaDrawable(density);
         bell.setReducedMotion(reducedMotion);
         marigold.setReducedMotion(reducedMotion);
         diya.setReducedMotion(reducedMotion);
-        setFestiveIcon(inputs, bell);
-        setFestiveIcon(btnWifi, diya);
-        setFestiveIcon(settings, marigold);
+        // A pill set to show its label alone (inputs_button and so on: "text") stays without an icon.
+        if (cfg.inputsButton.showsIcon()) setFestiveIcon(inputs, bell);
+        if (wifiStyle.showsIcon()) setFestiveIcon(btnWifi, diya);
+        if (cfg.settingsButton.showsIcon()) setFestiveIcon(settings, marigold);
         addFocusAction(inputs, bell::ring);
         addFocusAction(settings, marigold::turn);
     }
