@@ -115,6 +115,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private LinearLayout heroDots;
     /** Cinematic top shelf (config.xml, cinematic_home): the focused dock app's artwork behind a larger shelf. */
     private boolean cinematic;
+    /** config.xml glow_style: the shape setAmbient paints the glow mask in. */
+    private String glowStyle;
     private ImageView heroArt;
     private static final float HERO_ART_ALPHA = 0.5f;
     /** Softened artwork per app (HeroArt, about 5 KB each), made the first time its dock tile is focused. */
@@ -310,6 +312,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         heroDots = findViewById(R.id.heroDots);
         heroArt = findViewById(R.id.heroArt);
         cinematic = cfg.cinematicHome;
+        glowStyle = cfg.glowStyle;
         if (cinematic) setUpCinematicShelf();
         // dock_title false: the name above the dock (and the cinematic lines under it) never shows; the glow
         // still follows the dock.
@@ -1347,6 +1350,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         w * (rtl ? 0.20f : 0.80f), h * 0.06f, w * 0.78f,
                         new int[]{0xA6FFFFFF, 0x47FFFFFF, 0x00FFFFFF},
                         new float[]{0f, 0.5f, 1f},
+                        Shader.TileMode.CLAMP));
+            } else if (Config.GLOW_HORIZON.equals(glowStyle)) {
+                // The colour washes down from the top edge and fades out three quarters of the way down,
+                // with a brighter band along the top like light over a horizon.
+                paint.setShader(new LinearGradient(0, 0, 0, h * 0.75f,
+                        new int[]{0x66FFFFFF, 0x24FFFFFF, 0x00FFFFFF},
+                        new float[]{0f, 0.4f, 1f},
+                        Shader.TileMode.CLAMP));
+                canvas.drawRect(0, 0, w, h, paint);
+                paint.setShader(new RadialGradient(
+                        w * 0.5f, -h * 0.25f, w * 0.55f,
+                        new int[]{0x40FFFFFF, 0x00FFFFFF},
+                        null,
                         Shader.TileMode.CLAMP));
             } else {
                 paint.setShader(new RadialGradient(
